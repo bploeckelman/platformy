@@ -169,9 +169,12 @@ public class Level {
         mapRenderer.render(backgroundLayerIndex);
     }
 
-    public void renderForegroundLayer(OrthographicCamera camera) {
+    public void renderCollisionLayer(OrthographicCamera camera) {
         mapRenderer.setView(camera);
         mapRenderer.render(collisionLayerIndex);
+    }
+
+    public void renderForegroundLayer(OrthographicCamera camera) {
     }
 
     public void renderObjects(SpriteBatch batch, OrthographicCamera camera) {

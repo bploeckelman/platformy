@@ -11,20 +11,23 @@ public class Player extends GameEntity {
 
     private JumpState jumpState;
 
-    private final float jumpVelocity = 900f;
-    private final float horizontalSpeed = 50f;
-    private final float horizontalSpeedMinThreshold = 10f;
+    private final float jumpVelocity = 3000f;
+    private final float horizontalSpeed = 500f;
+    private final float horizontalSpeedMinThreshold = 50f;
     private final float horizontalJoystickThreshold = 0.2f;
 
     public Player(GameScreen screen, float x, float y) {
         super(screen, screen.game.assets.playerAnimation);
-        this.collisionBoundsOffsets.set(0f, 0f, keyframe.getRegionWidth(), keyframe.getRegionHeight());
+        this.collisionBounds.set(x, y, keyframe.getRegionWidth(), keyframe.getRegionHeight());
+        this.imageBounds.set(x, y, keyframe.getRegionWidth(), keyframe.getRegionHeight());
         this.position.set(x, y);
         this.jumpState = JumpState.none;
     }
 
     @Override
     public void update(float dt) {
+        super.update(dt);
+
         // Horizontal ----------------------------------------
 
         // Check for and apply horizontal movement
@@ -47,7 +50,7 @@ public class Player extends GameEntity {
         if (!grounded && !moveLeftPressed && !moveRightPressed) {
             velocity.x = 0f;
         } else {
-            velocity.x *= .85f;
+            velocity.x *= 0.85f;
         }
 
         // Clamp minimum horizontal velocity to zero
@@ -63,8 +66,6 @@ public class Player extends GameEntity {
         if (jumpPressed) {
             jump();
         }
-
-        super.update(dt);
     }
 
     private void jump() {

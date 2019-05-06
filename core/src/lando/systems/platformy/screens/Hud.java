@@ -51,6 +51,11 @@ public class Hud {
             batch.setColor(Color.WHITE);
             screen.game.assets.ninePatch.draw(batch, bound.x, bound.y, bound.width, bound.height);
         }
+
+        if (screen.player.state != null) {
+            screen.game.assets.font.draw(batch, "Player state: " + screen.player.state.name(), 10f, 25f);
+            screen.game.assets.font.draw(batch, String.format("Player veloc: (%2.1f, %2.1f)", screen.player.velocity.x, screen.player.velocity.y), 10f, 50f);
+        }
     }
 
 }

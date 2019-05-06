@@ -3,9 +3,9 @@ package lando.systems.platformy.screens;
 import com.badlogic.gdx.Application;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
@@ -77,22 +77,19 @@ public class GameScreen extends BaseScreen {
     public void render(SpriteBatch batch) {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        batch.setProjectionMatrix(shaker.getCombinedMatrix());
+        OrthographicCamera camera = shaker.getViewCamera();
+        batch.setProjectionMatrix(camera.combined);
         {
-//            level.render(shaker.getViewCamera());
-            level.renderBackgroundLayer(shaker.getViewCamera());
-            level.renderForegroundLayer(shaker.getViewCamera());
+//            level.render(camera);
+            level.renderBackgroundLayer(camera);
+            level.renderCollisionLayer(camera);
             batch.begin();
             {
                 player.render(batch);
-//            }
-//            batch.end();
-//            batch.begin();
-//            {
-                level.renderObjects(batch, shaker.getViewCamera());
+                level.renderObjects(batch, camera);
             }
             batch.end();
-
+            level.renderForegroundLayer(camera);
         }
 
         batch.setProjectionMatrix(hudCamera.combined);
@@ -104,11 +101,11 @@ public class GameScreen extends BaseScreen {
     }
 
     public void handleCameraConstraints() {
-        float playerX = player.position.x + player.width / 2f;
+        float playerX = player.position.x + player.collisionBounds.width / 2f;
         if (playerX < cameraTargetPos.x - cameraHorMargins) cameraTargetPos.x = playerX + cameraHorMargins;
         if (playerX > cameraTargetPos.x + cameraHorMargins) cameraTargetPos.x = playerX - cameraHorMargins;
 
-        float playerY = player.position.y + player.height / 2f;
+        float playerY = player.position.y + player.collisionBounds.height / 2f;
         if (playerY < cameraTargetPos.y - cameraVertMargins) cameraTargetPos.y = playerY + cameraVertMargins;
         if (player.grounded) {
             if (playerY > cameraTargetPos.y + cameraVertMargins) cameraTargetPos.y = playerY - cameraVertMargins;

@@ -10,36 +10,32 @@ import com.badlogic.gdx.utils.Array;
 import lando.systems.platformy.Assets;
 import lando.systems.platformy.Config;
 import lando.systems.platformy.screens.GameScreen;
-import lando.systems.platformy.world.Level;
 
 public class GameEntity {
 
     public enum Direction {right, left}
+    public enum State { standing, walking, jumping }
 
     private Assets assets;
 
     GameScreen screen;
     TextureRegion keyframe;
     Animation<TextureRegion> animation;
-    Direction direction = Direction.right;
 
-    // TODO: remove these, keep in collisionBounds rect
-    public float width;
-    public float height;
-    public Rectangle collisionBoundsOffsets;
-    private float stateTime;
-
+    public State state = State.standing;
+    public Direction direction = Direction.right;
     public Vector2 position = new Vector2();
     public Vector2 velocity = new Vector2();
+    public Rectangle imageBounds = new Rectangle();
+    public Rectangle collisionBounds = new Rectangle();
 
     public boolean grounded;
 
-    // TODO: shouldn't this be in level?
-    private float gravity = 2500;
-
-    private Array<Rectangle> tiles;
-    private Rectangle bounds = new Rectangle();
-    private Vector2 tempPos = new Vector2();
+    private float stateTime;
+    private float gravity = -100;
+    private float maxHorizontalVelocity = 2000f;
+    private float maxVerticalVelocity = 1200f;
+    private Array<Rectangle> tiles = new Array<>();
 
     GameEntity(GameScreen screen, Animation<TextureRegion> animation) {
         this(screen, animation.getKeyFrame(0f));
@@ -51,8 +47,6 @@ public class GameEntity {
         this.screen = screen;
         this.animation = null;
         this.keyframe = keyframe;
-        this.tiles = new Array<>();
-        this.collisionBoundsOffsets = new Rectangle();
         this.grounded = true;
         this.stateTime = 0f;
     }
@@ -75,89 +69,104 @@ public class GameEntity {
     }
 
     public void updatePosition(float dt) {
-        velocity.y -= gravity * dt;
+        stateTime += dt;
 
-        tempPos.set(position);
-        tempPos.add(velocity.x * dt, velocity.y * dt);
+        // apply gravity if we are falling
+        velocity.add(0f, gravity);
 
-        Rectangle entityRect = screen.level.rectPool.obtain();
-        float startX, startY, endX, endY;
+        // clamp velocity to maximum, horizontal only
+        velocity.x = Math.min(maxHorizontalVelocity, Math.max(-maxHorizontalVelocity, velocity.x));
 
-        // Check Horizontal
-        entityRect.set(tempPos.x  + collisionBoundsOffsets.x,
-                       position.y + collisionBoundsOffsets.y,
-                       collisionBoundsOffsets.width,
-                       collisionBoundsOffsets.height);
-        if (velocity.x > 0) {
-            startX = endX = entityRect.x + entityRect.width;
-//            startX = entityRect.x - Level.TILE_SIZE;
-//            endX = entityRect.x + entityRect.width + Level.TILE_SIZE;
+        // stop if entity gets slow enough
+        if (Math.abs(velocity.x) < 10f) {
+            velocity.x = 0f;
+            state = State.standing;
         } else {
-            startX = endX = entityRect.x;
-//            startX = entityRect.x - Level.TILE_SIZE;
-//            endX   = entityRect.x;
+            state = State.walking;
         }
-        startY = entityRect.y;
-        endY   = entityRect.y + entityRect.height;
+
+        if (!grounded) {
+            state = State.jumping;
+        }
+
+        // multiply by dt so we know how far we go in this frame
+        velocity.scl(dt);
+
+        // perform collision detection & response, on each axis, separately
+        // if entity is moving right, check tiles to the right
+        // of it's right bounding box edge, otherwise check the ones to the left
+        Rectangle entityRect = screen.level.rectPool.obtain();
+        entityRect.set(collisionBounds);
+
+        int startX, startY, endX, endY;
+        if (velocity.x > 0) startX = endX = (int) (entityRect.x + velocity.x + entityRect.width);
+        else                startX = endX = (int) (entityRect.x + velocity.x);
+        startY = (int) (entityRect.y);
+        endY   = (int) (entityRect.y + entityRect.height);
+        entityRect.x += velocity.x;
         screen.level.getTiles(startX, startY, endX, endY, tiles);
-
         for (Rectangle tile : tiles) {
-            entityRect.set(tempPos.x  + collisionBoundsOffsets.x,
-                           position.y + collisionBoundsOffsets.y,
-                           collisionBoundsOffsets.width,
-                           collisionBoundsOffsets.height);
-
             if (entityRect.overlaps(tile)) {
-                tempPos.x = position.x;
-//                changeDirection();
+                velocity.x = 0f;
                 break;
             }
         }
 
+        // TODO: check for object tile interactions (horizontal)
 
-        // Check vertical
-        entityRect.set(tempPos.x + collisionBoundsOffsets.x,
-                       tempPos.y + collisionBoundsOffsets.y,
-                       collisionBoundsOffsets.width,
-                       collisionBoundsOffsets.height);
-        // Above?
-        if (velocity.y > 0) {
-            startY = endY = entityRect.y + entityRect.height;
-        } else {
-            startY = position.y;
-            endY   = entityRect.y;
-        }
-        startX = entityRect.x;
-        endX   = entityRect.x + entityRect.width;
-
-        boolean wasGrounded = grounded;
+        // if the entity is moving upwards, check the tiles to the top
+        // of it's top bounding box edge, otherwise check the ones to the bottom
         grounded = false;
+        boolean yVelocityNeedsToBeCleared = false;
+        if (velocity.y > 0) startY = endY = (int) (entityRect.y + velocity.y + entityRect.height);
+        else                startY = endY = (int) (entityRect.y + velocity.y);
+        startX = (int) (entityRect.x);
+        endX   = (int) (entityRect.x + entityRect.width);
+        entityRect.y += velocity.y;
         screen.level.getTiles(startX, startY, endX, endY, tiles);
         for (Rectangle tile : tiles) {
-            entityRect.set(tempPos.x + collisionBoundsOffsets.x, tempPos.y + collisionBoundsOffsets.y, collisionBoundsOffsets.width, collisionBoundsOffsets.height);
             if (entityRect.overlaps(tile)) {
-                if (velocity.y > 0) {
-                    tempPos.y = Math.min(tempPos.y, tile.y - height);
+                // actually reset the entity y-position here
+                // so its just below / above the collided tile (removes bouncing)
+                if (velocity.y > 0f) {
+                    collisionBounds.y = tile.y - collisionBounds.height;
                 } else {
-                    tempPos.y = Math.max(tempPos.y, tile.y + tile.height);
+                    collisionBounds.y = tile.y + tile.height;
                     grounded = true;
                 }
-                velocity.y = 0;
             }
+            yVelocityNeedsToBeCleared = true;
+            break;
         }
 
-//        screen.level.handleObjectInteractions(this);
+        // TODO: check for object tile interactions (vertical)
+
+        if (yVelocityNeedsToBeCleared) {
+            velocity.y = 0f;
+        }
 
         screen.level.rectPool.free(entityRect);
-        position.set(tempPos);
 
-        bounds.set(collisionBoundsOffsets);
-        bounds.x += position.x;
-        bounds.y += position.y;
+        collisionBounds.x += velocity.x;
+        collisionBounds.y += velocity.y;
+        velocity.scl(1f / dt);
+
+        position.set(collisionBounds.x, collisionBounds.y);
     }
 
     public void render(SpriteBatch batch) {
         if (keyframe == null) return;
+
+        if (Config.debug) {
+            assets.ninePatch.draw(batch, collisionBounds.x, collisionBounds.y, collisionBounds.width, collisionBounds.height);
+            batch.setColor(Color.RED);
+
+            batch.setColor(Color.YELLOW);
+            for (Rectangle tile : tiles) {
+                assets.ninePatch.draw(batch, tile.x, tile.y, tile.width, tile.height);
+            }
+            batch.setColor(Color.WHITE);
+        }
 
         float scaleX = (direction == Direction.right) ? 1 : -1;
         float scaleY = 1;
@@ -167,22 +176,9 @@ public class GameEntity {
         }
 
         batch.setColor(Color.WHITE);
-        batch.draw(keyframe, position.x, position.y,
-                   width / 2, height / 2,
-                   width, height, scaleX, scaleY, 0);
-
-        if (Config.debug) {
-            assets.ninePatch.draw(batch, bounds.x, bounds.y, bounds.width, bounds.height);
-            batch.setColor(Color.RED);
-            assets.ninePatch.draw(batch, position.x + collisionBoundsOffsets.x, position.y + collisionBoundsOffsets.y, collisionBoundsOffsets.width, collisionBoundsOffsets.height);
-            batch.setColor(Color.WHITE);
-
-            batch.setColor(Color.YELLOW);
-            for (Rectangle tile : tiles) {
-                assets.ninePatch.draw(batch, tile.x, tile.y, tile.width, tile.height);
-            }
-            batch.setColor(Color.WHITE);
-        }
+        batch.draw(keyframe, collisionBounds.x, collisionBounds.y,
+                   collisionBounds.width / 2, collisionBounds.height / 2,
+                   collisionBounds.width, collisionBounds.height, scaleX, scaleY, 0);
     }
 
 }

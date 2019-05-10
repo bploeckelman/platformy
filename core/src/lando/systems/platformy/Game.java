@@ -16,6 +16,7 @@ import com.badlogic.gdx.math.Vector3;
 import lando.systems.platformy.accessors.*;
 import lando.systems.platformy.screens.BaseScreen;
 import lando.systems.platformy.screens.GameScreen;
+import lando.systems.platformy.screens.TestScreen;
 
 public class Game extends ApplicationAdapter {
 
@@ -64,9 +65,10 @@ public class Game extends ApplicationAdapter {
 		originalTexture = originalFBO.getColorBufferTexture();
 
 		controllers = new ControllerInput();
-		Controllers.addListener(controllers);
+//		Controllers.addListener(controllers);
 
-        setScreen(new GameScreen(this));
+//        setScreen(new GameScreen(this));
+		setScreen(new TestScreen(this));
 	}
 
 	@Override

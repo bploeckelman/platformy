@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
@@ -26,8 +27,10 @@ public class GameEntity {
     public Direction direction = Direction.right;
     public Vector2 position = new Vector2();
     public Vector2 velocity = new Vector2();
+    public Vector2 acceleration = new Vector2();
     public Rectangle imageBounds = new Rectangle();
     public Rectangle collisionBounds = new Rectangle();
+    public Circle collisionCircle = new Circle();
 
     public boolean grounded;
 
@@ -152,14 +155,17 @@ public class GameEntity {
         velocity.scl(1f / dt);
 
         position.set(collisionBounds.x, collisionBounds.y);
+        collisionCircle.setPosition(collisionBounds.x + collisionBounds.width / 2f, collisionBounds.y + collisionBounds.height / 2f);
+        collisionCircle.setRadius(collisionBounds.width / 2f);
     }
 
     public void render(SpriteBatch batch) {
         if (keyframe == null) return;
 
         if (Config.debug) {
-            assets.ninePatch.draw(batch, collisionBounds.x, collisionBounds.y, collisionBounds.width, collisionBounds.height);
             batch.setColor(Color.RED);
+            assets.ninePatch.draw(batch, collisionBounds.x, collisionBounds.y, collisionBounds.width, collisionBounds.height);
+            batch.setColor(Color.WHITE);
 
             batch.setColor(Color.YELLOW);
             for (Rectangle tile : tiles) {
@@ -179,6 +185,18 @@ public class GameEntity {
         batch.draw(keyframe, collisionBounds.x, collisionBounds.y,
                    collisionBounds.width / 2, collisionBounds.height / 2,
                    collisionBounds.width, collisionBounds.height, scaleX, scaleY, 0);
+//        batch.draw(assets.whiteCircleOutline, collisionBounds.x, collisionBounds.y,
+//                   collisionBounds.width / 2, collisionBounds.height / 2,
+//                   collisionBounds.width, collisionBounds.height, scaleX, scaleY, 0);
+
+        if (Config.debug) {
+            batch.setColor(Color.MAGENTA);
+            batch.draw(assets.whiteCircleOutline,
+                       collisionCircle.x - collisionCircle.radius,
+                       collisionCircle.y - collisionCircle.radius,
+                       collisionCircle.radius * 2f, collisionCircle.radius * 2f);
+            batch.setColor(Color.WHITE);
+        }
     }
 
 }

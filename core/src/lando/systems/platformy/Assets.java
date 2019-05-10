@@ -31,6 +31,7 @@ public class Assets implements Disposable {
     public TextureAtlas atlas;
     public TextureRegion debugTexture;
     public TextureRegion whitePixel;
+    public TextureRegion whiteCircleOutline;
     public TextureRegion xboxControllerIcon;
 
     public Animation<TextureRegion> playerAnimation;
@@ -90,6 +91,7 @@ public class Assets implements Disposable {
         atlas = mgr.get(atlasAsset);
         debugTexture = atlas.findRegion("white-circle");
         whitePixel = atlas.findRegion("white-pixel");
+        whiteCircleOutline = atlas.findRegion("white-circle-outline");
         xboxControllerIcon = atlas.findRegion("ui/xbox-controller-icon");
 
         Array<TextureAtlas.AtlasRegion> playerAnimFrames = atlas.findRegions("bunny");

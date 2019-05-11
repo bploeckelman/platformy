@@ -6,6 +6,7 @@ import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import lando.systems.platformy.Assets;
+import lando.systems.platformy.Config;
 import lando.systems.platformy.Game;
 import lando.systems.platformy.entities.test.Player2;
 import lando.systems.platformy.entities.test.PlayerInput;
@@ -56,17 +57,19 @@ public class TestScreen extends BaseScreen {
             float rotation = 0f;
             batch.draw(player.keyframe, x, y, w / 2f, h / 2f, w, h, player.scale.x, player.scale.y, rotation);
 
-            batch.setColor(Color.YELLOW);
-            assets.ninePatch.draw(batch, player.position.x, player.position.y,
-                                  player.keyframe.getRegionWidth(),
-                                  player.keyframe.getRegionHeight());
-            batch.setColor(1f, 0f, 0f, 0.5f);
-            assets.ninePatch.draw(batch,
-                                  player.bounds.center.x - player.bounds.halfSize.x,
-                                  player.bounds.center.y - player.bounds.halfSize.y,
-                                  player.bounds.halfSize.x  * 2f,
-                                  player.bounds.halfSize.y * 2f);
-            batch.setColor(Color.WHITE);
+            if (Config.debug) {
+                batch.setColor(Color.YELLOW);
+                assets.ninePatch.draw(batch, player.position.x, player.position.y,
+                                      player.keyframe.getRegionWidth(),
+                                      player.keyframe.getRegionHeight());
+                batch.setColor(1f, 0f, 0f, 0.5f);
+                assets.ninePatch.draw(batch,
+                                      player.bounds.center.x - player.bounds.halfSize.x,
+                                      player.bounds.center.y - player.bounds.halfSize.y,
+                                      player.bounds.halfSize.x * 2f,
+                                      player.bounds.halfSize.y * 2f);
+                batch.setColor(Color.WHITE);
+            }
         }
         batch.end();
 

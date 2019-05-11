@@ -40,6 +40,10 @@ public class PlayerInput implements ControllerListener, InputProcessor {
             player.inputs.put(Action.jump, true);
             inputWasProcessed = true;
         }
+        if (buttonCode == Xbox.R_BUMPER) {
+            player.inputs.put(Action.run, true);
+            inputWasProcessed = true;
+        }
         return inputWasProcessed;
     }
 
@@ -48,6 +52,10 @@ public class PlayerInput implements ControllerListener, InputProcessor {
         boolean inputWasProcessed = false;
         if (buttonCode == Xbox.A) {
             player.inputs.put(Action.jump, false);
+            inputWasProcessed = true;
+        }
+        if (buttonCode == Xbox.R_BUMPER) {
+            player.inputs.put(Action.run, false);
             inputWasProcessed = true;
         }
         return inputWasProcessed;
@@ -132,6 +140,10 @@ public class PlayerInput implements ControllerListener, InputProcessor {
             player.inputs.put(Action.jump, true);
             inputWasProcessed = true;
         }
+        if (keycode == Input.Keys.SHIFT_LEFT) {
+            player.inputs.put(Action.run, true);
+            inputWasProcessed = true;
+        }
         return inputWasProcessed;
     }
 
@@ -148,6 +160,10 @@ public class PlayerInput implements ControllerListener, InputProcessor {
         }
         if (keycode == Input.Keys.SPACE) {
             player.inputs.put(Action.jump, false);
+            inputWasProcessed = true;
+        }
+        if (keycode == Input.Keys.SHIFT_LEFT) {
+            player.inputs.put(Action.run, false);
             inputWasProcessed = true;
         }
         return inputWasProcessed;

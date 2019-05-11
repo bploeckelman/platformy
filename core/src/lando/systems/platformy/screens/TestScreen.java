@@ -7,7 +7,6 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import lando.systems.platformy.Assets;
 import lando.systems.platformy.Game;
-import lando.systems.platformy.entities.test.CharacterFacing;
 import lando.systems.platformy.entities.test.Player2;
 import lando.systems.platformy.entities.test.PlayerInput;
 
@@ -54,10 +53,7 @@ public class TestScreen extends BaseScreen {
             float y = player.position.y;
             float w = player.keyframe.getRegionWidth();
             float h = player.keyframe.getRegionHeight();
-//            float scaleX = (player.currentFacing == CharacterFacing.right) ? 1f : -1f;
-//            float scaleY = 1f;
             float rotation = 0f;
-//            batch.draw(player.keyframe, x, y, w / 2f, h / 2f, w, h, scaleX, scaleY, rotation);
             batch.draw(player.keyframe, x, y, w / 2f, h / 2f, w, h, player.scale.x, player.scale.y, rotation);
 
             batch.setColor(Color.YELLOW);

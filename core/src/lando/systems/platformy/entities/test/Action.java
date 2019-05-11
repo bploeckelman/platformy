@@ -4,4 +4,5 @@ public enum Action {
       left
     , right
     , jump
+    , run
 }

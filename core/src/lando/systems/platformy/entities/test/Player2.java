@@ -6,8 +6,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.ObjectMap;
 import lando.systems.platformy.Assets;
 
-import static lando.systems.platformy.entities.test.CharacterState.jump_down;
-import static lando.systems.platformy.entities.test.CharacterState.jump_up;
+import static lando.systems.platformy.entities.test.CharacterState.*;
 
 public class Player2 extends MovingObject {
 
@@ -26,6 +25,7 @@ public class Player2 extends MovingObject {
 
     public float jumpSpeed;
     public float walkSpeed;
+    public float runModifier;
     public float gravity;
     public float maxFallSpeed;
     public float minJumpSpeed;
@@ -49,8 +49,9 @@ public class Player2 extends MovingObject {
         float tileSize = 32f;
         this.jumpSpeed    =  40f * tileSize;
         this.walkSpeed    =  30f * tileSize;
-        this.gravity      = -300f * tileSize;
-        this.maxFallSpeed = -350f * tileSize;
+        this.runModifier  =  2f;
+        this.gravity      = -400f * tileSize;
+        this.maxFallSpeed = -500f * tileSize;
         this.minJumpSpeed =  10f * tileSize;
     }
 
@@ -86,7 +87,12 @@ public class Player2 extends MovingObject {
                     break;
                 }
             } break;
-            case walk: {
+            case walk:
+            case run: {
+                if (inputState(Action.run)) {
+                    currentState = CharacterState.run;
+                }
+
                 if (inputState(Action.right) == inputState(Action.left)) {
                     currentState = CharacterState.stand;
                     speed.set(Vector2.Zero);
@@ -96,7 +102,11 @@ public class Player2 extends MovingObject {
                     if (pushesRightWall) {
                         speed.x = 0f;
                     } else {
-                        speed.x = walkSpeed;
+                        if (inputState(Action.run)) {
+                            speed.x = walkSpeed * runModifier;
+                        } else {
+                           speed.x = walkSpeed;
+                        }
                     }
                     scale.x = Math.abs(scale.x);
                 }
@@ -104,7 +114,11 @@ public class Player2 extends MovingObject {
                     if (pushesLeftWall) {
                         speed.x = 0f;
                     } else {
-                        speed.x = -walkSpeed;
+                        if (inputState(Action.run)) {
+                            speed.x = -walkSpeed * runModifier;
+                        } else {
+                            speed.x = -walkSpeed;
+                        }
                     }
                     scale.x = -Math.abs(scale.x);
                 }
@@ -136,7 +150,11 @@ public class Player2 extends MovingObject {
                     if (pushesRightWall) {
                         speed.x = 0f;
                     } else {
-                        speed.x = walkSpeed;
+                        if (inputState(Action.run)) {
+                            speed.x = walkSpeed * runModifier;
+                        } else {
+                            speed.x = walkSpeed;
+                        }
                     }
                     scale.x = Math.abs(scale.x);
                     currentFacing = CharacterFacing.right;
@@ -145,7 +163,11 @@ public class Player2 extends MovingObject {
                     if (pushesLeftWall) {
                         speed.x = 0f;
                     } else {
-                        speed.x = -walkSpeed;
+                        if (inputState(Action.run)) {
+                            speed.x = -walkSpeed * runModifier;
+                        } else {
+                            speed.x = -walkSpeed;
+                        }
                     }
                     scale.x = -Math.abs(scale.x);
                     currentFacing = CharacterFacing.left;

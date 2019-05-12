@@ -1,6 +1,7 @@
 package lando.systems.platformy.entities.test;
 
 import com.badlogic.gdx.math.Vector2;
+import lando.systems.platformy.entities.test.Map;
 
 public class MovingObject {
 
@@ -49,7 +50,7 @@ public class MovingObject {
         this.pushedRightWall = false;
     }
 
-    public void update(float dt) {
+    public void update(float dt, Map map) {
         prevPosition.set(position);
         prevSpeed.set(speed);
 
@@ -62,8 +63,17 @@ public class MovingObject {
 
         // TODO: for now, zero is the 'ground'
         // NOTE: shouldn't this be using the bounds instead of position?
-        if (position.y <= 0f) {
-            position.y = 0f;
+//        if (position.y <= 0f) {
+//            position.y = 0f;
+//            speed.y = 0f;
+//            onGround = true;
+//        } else {
+//            onGround = false;
+//        }
+        groundY = 0f; // mutated by hasGround(), this is dumb and should be made less dumb
+        if (speed.y <= 0f && hasGround(map, prevPosition, position, speed)) {
+            position.y = prevPosition.y;
+//            position.y = groundY;// + bounds.halfSize.y - boundsOffset.y;
             speed.y = 0f;
             onGround = true;
         } else {
@@ -72,6 +82,32 @@ public class MovingObject {
 
         bounds.center.set(position.x + bounds.halfSize.x + boundsOffset.x,
                           position.y + bounds.halfSize.y + boundsOffset.y);
+    }
+
+    private Vector2 temp1 = new Vector2();
+    private Vector2 temp2 = new Vector2();
+    private Vector2 temp3 = new Vector2();
+    private float groundY;
+    public boolean hasGround(Map map, Vector2 prevPosition, Vector2 position, Vector2 speed) {
+        Vector2 center      = temp1.set(bounds.center);//set(position).add(boundsOffset);
+        Vector2 bottomLeft  = temp2.set(center).sub(bounds.halfSize).sub(Vector2.Y).add(Vector2.X);
+        Vector2 bottomRight = temp3.set(bottomLeft.x + bounds.halfSize.x * 2f - 2f, bottomLeft.y);
+
+        float checkedTileY = bottomLeft.y;
+        for (float checkedTileX = bottomLeft.x ;; checkedTileX += Map.tile_size) {
+            checkedTileX = Math.min(checkedTileX, bottomRight.x);
+            Tile tile = map.getTileAtWorldPosition(checkedTileX, checkedTileY);
+
+            groundY = map.position.y + tile.bounds.y;
+            if (tile.isObstacle()) {
+                return true;
+            }
+
+            if (checkedTileX >= bottomRight.x) {
+                break;
+            }
+        }
+        return false;
     }
 
 }

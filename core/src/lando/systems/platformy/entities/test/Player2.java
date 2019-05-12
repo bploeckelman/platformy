@@ -47,16 +47,16 @@ public class Player2 extends MovingObject {
         this.animStateTime = 0f;
         // NOTE: think in tiles per second
         float tileSize = 32f;
-        this.jumpSpeed    =  40f * tileSize;
+        this.jumpSpeed    =  60f * tileSize;
         this.walkSpeed    =  30f * tileSize;
         this.runModifier  =  1.8f;
-        this.gravity      = -400f * tileSize;
-        this.maxFallSpeed = -500f * tileSize;
+        this.gravity      = -800f * tileSize;
+        this.maxFallSpeed = -1000f * tileSize;
         this.minJumpSpeed =  10f * tileSize;
     }
 
     @Override
-    public void update(float dt) {
+    public void update(float dt, Map map) {
         // Handle state specific updates
         prevState  = currentState;
         prevFacing = currentFacing;
@@ -124,8 +124,8 @@ public class Player2 extends MovingObject {
                 }
 
                 if (inputState(Action.jump)) {
-                    currentState = jump_up;
                     speed.y = jumpSpeed;
+                    currentState = jump_up;
                     break;
                 }
                 else if (!onGround) {
@@ -185,7 +185,7 @@ public class Player2 extends MovingObject {
             } break;
         }
 
-        super.update(dt);
+        super.update(dt, map);
 
         // Update animation if appropriate
         animStateTime += dt;

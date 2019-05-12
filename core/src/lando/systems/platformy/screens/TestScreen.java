@@ -40,8 +40,8 @@ public class TestScreen extends BaseScreen {
             Gdx.app.exit();
         }
 
-        player.update(dt);
         map.update(dt);
+        player.update(dt, map);
 
         updateCamera();
     }
@@ -58,11 +58,16 @@ public class TestScreen extends BaseScreen {
             batch.draw(assets.whitePixel, -1000f, -10f, 2000f, 10f);
 
             // player
-            float x = player.position.x;
-            float y = player.position.y;
+            float x = player.prevPosition.x;
+            float y = player.prevPosition.y;
             float w = player.keyframe.getRegionWidth();
             float h = player.keyframe.getRegionHeight();
             float rotation = 0f;
+            batch.setColor(1f, 1f, 1f, 0.1f);
+            batch.draw(player.keyframe, x, y, w / 2f, h / 2f, w, h, player.scale.x, player.scale.y, rotation);
+            batch.setColor(Color.WHITE);
+            x = player.position.x;
+            y = player.position.y;
             batch.draw(player.keyframe, x, y, w / 2f, h / 2f, w, h, player.scale.x, player.scale.y, rotation);
 
             // player bounds (debug)

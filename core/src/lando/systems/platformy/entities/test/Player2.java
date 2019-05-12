@@ -49,7 +49,7 @@ public class Player2 extends MovingObject {
         float tileSize = 32f;
         this.jumpSpeed    =  40f * tileSize;
         this.walkSpeed    =  30f * tileSize;
-        this.runModifier  =  2f;
+        this.runModifier  =  1.8f;
         this.gravity      = -400f * tileSize;
         this.maxFallSpeed = -500f * tileSize;
         this.minJumpSpeed =  10f * tileSize;

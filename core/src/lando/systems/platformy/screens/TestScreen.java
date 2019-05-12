@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import lando.systems.platformy.Assets;
 import lando.systems.platformy.Config;
 import lando.systems.platformy.Game;
+import lando.systems.platformy.entities.test.Map;
 import lando.systems.platformy.entities.test.Player2;
 import lando.systems.platformy.entities.test.PlayerInput;
 
@@ -16,12 +17,14 @@ public class TestScreen extends BaseScreen {
     private Assets assets;
     private Player2 player;
     private PlayerInput playerInput;
+    private Map map;
 
     public TestScreen(Game game) {
         super(game);
         this.assets = game.assets;
         this.player = new Player2(assets, 100f, 100f);
         this.playerInput = new PlayerInput(player);
+        this.map = new Map(assets);
 
         cameraOverride = true;
         worldCamera.translate(0f, -20f);
@@ -38,6 +41,7 @@ public class TestScreen extends BaseScreen {
         }
 
         player.update(dt);
+        map.update(dt);
 
         updateCamera();
     }
@@ -47,9 +51,13 @@ public class TestScreen extends BaseScreen {
         batch.setProjectionMatrix(worldCamera.combined);
         batch.begin();
         {
+            // tile map
+            map.render(batch);
+
             // ground
             batch.draw(assets.whitePixel, -1000f, -10f, 2000f, 10f);
 
+            // player
             float x = player.position.x;
             float y = player.position.y;
             float w = player.keyframe.getRegionWidth();
@@ -57,6 +65,7 @@ public class TestScreen extends BaseScreen {
             float rotation = 0f;
             batch.draw(player.keyframe, x, y, w / 2f, h / 2f, w, h, player.scale.x, player.scale.y, rotation);
 
+            // player bounds (debug)
             if (Config.debug) {
                 batch.setColor(Color.YELLOW);
                 assets.ninePatch.draw(batch, player.position.x, player.position.y,

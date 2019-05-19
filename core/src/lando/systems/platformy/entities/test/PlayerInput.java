@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.controllers.Controller;
 import com.badlogic.gdx.controllers.ControllerListener;
+import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.controllers.PovDirection;
 import com.badlogic.gdx.controllers.mappings.Xbox;
 import com.badlogic.gdx.math.Vector3;
@@ -17,6 +18,28 @@ public class PlayerInput implements ControllerListener, InputProcessor {
 
     public PlayerInput(Player2 player) {
         this.player = player;
+    }
+
+    public void update(float dt) {
+        Controller controller = Controllers.getControllers().get(0);
+        if (controller != null) {
+            player.inputs.put(Action.left, false);
+            player.inputs.put(Action.right, false);
+
+            float leftStickHorz = controller.getAxis(Xbox.L_STICK_HORIZONTAL_AXIS);
+            float leftStickVert = controller.getAxis(Xbox.L_STICK_VERTICAL_AXIS);
+            Gdx.app.log("CONTROLLER",
+                        "horz = " + String.format("%2.2f", leftStickHorz)
+                              + "  vert = " + String.format("%2.2f", leftStickVert));
+
+            float deadZone = 0.15f;
+            if (controller.getAxis(Xbox.L_STICK_HORIZONTAL_AXIS) > deadZone) {
+                player.inputs.put(Action.right, true);
+            }
+            else if (controller.getAxis(Xbox.L_STICK_HORIZONTAL_AXIS) < -deadZone) {
+                player.inputs.put(Action.left, true);
+            }
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -64,27 +87,6 @@ public class PlayerInput implements ControllerListener, InputProcessor {
     @Override
     public boolean axisMoved(Controller controller, int axisCode, float value) {
         boolean inputWasProcessed = false;
-        Gdx.app.log("CONTROLLER", "axis moved: value = " + String.format("%2.2f", value));
-        float deadZone = 0.15f;
-        if (axisCode == Xbox.L_STICK_HORIZONTAL_AXIS && Math.abs(value) > deadZone) {
-            if (Math.signum(value) == -1) {
-                player.inputs.put(Action.left, true);
-                inputWasProcessed = true;
-            }
-            else if (Math.signum(value) == 1) {
-                player.inputs.put(Action.right, true);
-                inputWasProcessed = true;
-            }
-            else {
-                // TODO: is this going to interfere with keyboard input?
-                player.inputs.put(Action.left, false);
-                player.inputs.put(Action.right, false);
-            }
-        } else {
-            // TODO: is this going to interfere with keyboard input?
-            player.inputs.put(Action.left, false);
-            player.inputs.put(Action.right, false);
-        }
         return inputWasProcessed;
     }
 

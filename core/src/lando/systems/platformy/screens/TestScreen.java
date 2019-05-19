@@ -40,6 +40,8 @@ public class TestScreen extends BaseScreen {
             Gdx.app.exit();
         }
 
+        playerInput.update(dt);
+
         map.update(dt);
         player.update(dt, map);
 

@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.math.MathUtils;
 import lando.systems.platformy.Assets;
 import lando.systems.platformy.Config;
 import lando.systems.platformy.Game;
@@ -26,7 +27,7 @@ public class TestScreen extends BaseScreen {
         this.playerInput = new PlayerInput(player);
         this.map = new Map(assets);
 
-        cameraOverride = true;
+//        cameraOverride = true;
         worldCamera.translate(0f, -20f);
         worldCamera.update();
 
@@ -98,6 +99,37 @@ public class TestScreen extends BaseScreen {
             assets.font.draw(batch, assets.layout, 10f, hudCamera.viewportHeight - 10f - assets.layout.height - 10f);
         }
         batch.end();
+    }
+
+    @Override
+    public void updateCamera() {
+        float cameraHorMargins = 0f;
+        float playerX = player.position.x + player.bounds.halfSize.x;
+        if (playerX < cameraTargetPos.x - cameraHorMargins) cameraTargetPos.x = playerX + cameraHorMargins;
+        if (playerX > cameraTargetPos.x + cameraHorMargins) cameraTargetPos.x = playerX - cameraHorMargins;
+
+        float cameraVertMargins = 0f;
+        float cameraVertJumpMargin = 0f;
+        float playerY = player.position.y + player.bounds.halfSize.y;
+        if (playerY < cameraTargetPos.y - cameraVertMargins) cameraTargetPos.y = playerY + cameraVertMargins;
+//        if (player.grounded) {
+//            if (playerY > cameraTargetPos.y + cameraVertMargins) cameraTargetPos.y = playerY - cameraVertMargins;
+//        } else {
+            if (playerY > cameraTargetPos.y + cameraVertJumpMargin) cameraTargetPos.y = playerY - cameraVertJumpMargin;
+//        }
+
+
+        float cameraLeftEdge = worldCamera.viewportWidth / 2f;
+//        cameraTargetPos.x = MathUtils.clamp(cameraTargetPos.x, cameraLeftEdge, level.collisionLayer.getWidth() * level.collisionLayer.getTileWidth() - cameraLeftEdge);
+        cameraTargetPos.x = MathUtils.clamp(cameraTargetPos.x, cameraLeftEdge, map.position.x + Map.tiles_wide * Map.tile_size - cameraLeftEdge);
+
+        float cameraVertEdge = worldCamera.viewportHeight / 2f;
+//        cameraTargetPos.y = MathUtils.clamp(cameraTargetPos.y, cameraVertEdge, level.collisionLayer.getHeight() * level.collisionLayer.getTileHeight() - cameraVertEdge);
+        cameraTargetPos.y = MathUtils.clamp(cameraTargetPos.y, cameraVertEdge, map.position.y + Map.tiles_high * Map.tile_size - cameraVertEdge);
+
+//        targetZoom.setValue(1 + Math.abs(player.velocity.y / 2000f));
+
+        super.updateCamera();
     }
 
 }

@@ -10,8 +10,8 @@ import lando.systems.platformy.Assets;
 public class Map {
 
     public static final float tile_size = 32f;
-    public static int tiles_wide = 80;
-    public static int tiles_high = 60;
+    public static int tiles_wide = 30;
+    public static int tiles_high = 17;
 
     public Vector2 position;
 
@@ -28,10 +28,29 @@ public class Map {
             Tile tile = new Tile(i);
             this.tiles.add(tile);
         }
-        // Add a floor
+        // Add a floor and a ceiling
         for (int x = 0; x < tiles_wide; ++x) {
             int row = 0;
-            int index = x + row * tiles_wide;
+            int index;
+
+            index = x + row * tiles_wide;
+            this.tiles.get(index).type = Tile.Type.block;
+
+            row = tiles_high - 1;
+            index = x + row * tiles_wide;
+            this.tiles.get(index).type = Tile.Type.block;
+        }
+        // Add two walls
+        for (int y = 0; y < tiles_high; ++y) {
+            int row = y;
+            int leftCol = 0;
+            int rightCol = tiles_wide - 1;
+
+            int index;
+            index = leftCol + row * tiles_wide;
+            this.tiles.get(index).type = Tile.Type.block;
+
+            index = rightCol + row * tiles_wide;
             this.tiles.get(index).type = Tile.Type.block;
         }
         // Add a platform

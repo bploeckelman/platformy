@@ -9,6 +9,7 @@ import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.controllers.PovDirection;
 import com.badlogic.gdx.controllers.mappings.Xbox;
 import com.badlogic.gdx.math.Vector3;
+import lando.systems.platformy.Config;
 
 import static com.badlogic.gdx.controllers.PovDirection.*;
 
@@ -21,6 +22,8 @@ public class PlayerInput implements ControllerListener, InputProcessor {
     }
 
     public void update(float dt) {
+        if (Controllers.getControllers().isEmpty()) return;
+
         Controller controller = Controllers.getControllers().get(0);
         if (controller != null) {
             player.inputs.put(Action.left, false);
@@ -28,9 +31,11 @@ public class PlayerInput implements ControllerListener, InputProcessor {
 
             float leftStickHorz = controller.getAxis(Xbox.L_STICK_HORIZONTAL_AXIS);
             float leftStickVert = controller.getAxis(Xbox.L_STICK_VERTICAL_AXIS);
-            Gdx.app.log("CONTROLLER",
-                        "horz = " + String.format("%2.2f", leftStickHorz)
-                              + "  vert = " + String.format("%2.2f", leftStickVert));
+            if (Config.debug) {
+                Gdx.app.log("CONTROLLER",
+                            "horz = " + String.format("%2.2f", leftStickHorz)
+                                  + "  vert = " + String.format("%2.2f", leftStickVert));
+            }
 
             float deadZone = 0.15f;
             if (controller.getAxis(Xbox.L_STICK_HORIZONTAL_AXIS) > deadZone) {
@@ -58,12 +63,16 @@ public class PlayerInput implements ControllerListener, InputProcessor {
 
     @Override
     public boolean buttonDown(Controller controller, int buttonCode) {
+//        if (Config.debug) {
+            Gdx.app.log("CONTROLLER", "button down : " + buttonCode);
+//        }
+
         boolean inputWasProcessed = false;
         if (buttonCode == Xbox.A) {
             player.inputs.put(Action.jump, true);
             inputWasProcessed = true;
         }
-        if (buttonCode == Xbox.R_BUMPER) {
+        if (buttonCode == Xbox.R_TRIGGER) {
             player.inputs.put(Action.run, true);
             inputWasProcessed = true;
         }
@@ -72,12 +81,16 @@ public class PlayerInput implements ControllerListener, InputProcessor {
 
     @Override
     public boolean buttonUp(Controller controller, int buttonCode) {
+//        if (Config.debug) {
+            Gdx.app.log("CONTROLLER", "button up: " + buttonCode);
+//        }
+
         boolean inputWasProcessed = false;
         if (buttonCode == Xbox.A) {
             player.inputs.put(Action.jump, false);
             inputWasProcessed = true;
         }
-        if (buttonCode == Xbox.R_BUMPER) {
+        if (buttonCode == Xbox.R_TRIGGER) {
             player.inputs.put(Action.run, false);
             inputWasProcessed = true;
         }

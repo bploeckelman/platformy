@@ -2,9 +2,11 @@ package lando.systems.platformy.entities.test;
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
+import com.badlogic.gdx.utils.Pool;
 import lando.systems.platformy.Assets;
 
 public class Map {
@@ -130,4 +132,16 @@ public class Map {
         return tiles.get(index);
     }
 
+    public void getTiles(int startX, int startY, int endX, int endY, Array<Rectangle> collisionRects, Pool<Rectangle> rectanglePool) {
+        rectanglePool.freeAll(collisionRects);
+        collisionRects.clear();
+
+        for (int y = startY; y <= endY; ++y) {
+            for (int x = startX; x <= endX; ++x) {
+                Tile tile = getTileAtWorldPosition(x, y);
+                if (tile == null || tile.isEmpty()) continue;
+                collisionRects.add(rectanglePool.obtain().set(x, y, tile_size, tile_size));
+            }
+        }
+    }
 }

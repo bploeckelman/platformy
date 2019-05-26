@@ -57,7 +57,7 @@ public class Player2 extends MovingObject {
 
     @Override
     public void update(float dt, Map map) {
-        // Handle state specific updates
+        // Update speed, state, and facing
         prevState  = currentState;
         prevFacing = currentFacing;
         switch (currentState) {

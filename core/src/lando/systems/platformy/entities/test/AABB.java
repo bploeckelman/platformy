@@ -8,6 +8,15 @@ public class AABB {
     public Vector2 center;
     public Vector2 halfSize;
 
+    public AABB() {
+        this.center = new Vector2();
+        this.halfSize = new Vector2();
+    }
+
+    public AABB(AABB other) {
+        this(other.center, other.halfSize);
+    }
+
     public AABB(Vector2 center, Vector2 halfSize) {
         this.center = center.cpy();
         this.halfSize = halfSize.cpy();
@@ -23,6 +32,19 @@ public class AABB {
              rectangle.y + rectangle.height / 2f,
              rectangle.width / 2f,
              rectangle.height / 2f);
+    }
+
+    public AABB set(AABB other) {
+        this.center = other.center.cpy();
+        this.halfSize = other.halfSize.cpy();
+        return this;
+    }
+
+    public AABB set(Rectangle rectangle) {
+        this.center.set(rectangle.x + rectangle.width / 2f,
+                        rectangle.y + rectangle.height / 2f);
+        this.halfSize.set(rectangle.width / 2f, rectangle.height / 2f);
+        return this;
     }
 
     public boolean overlaps(AABB that) {

@@ -2,6 +2,7 @@ package lando.systems.platformy.entities.test;
 
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Pool;
 
 public class AABB {
 
@@ -51,6 +52,16 @@ public class AABB {
         if (Math.abs(this.center.x - that.center.x) > (this.halfSize.x + that.halfSize.x)) return false;
         if (Math.abs(this.center.y - that.center.y) > (this.halfSize.y + that.halfSize.y)) return false;
         return true;
+    }
+
+    public Rectangle toRect() {
+        return new Rectangle(center.x - halfSize.x, center.y - halfSize.y,
+                             2f * halfSize.x, 2f * halfSize.y);
+    }
+
+    public Rectangle toRect(Pool<Rectangle> pool) {
+        return pool.obtain().set(center.x - halfSize.x, center.y - halfSize.y,
+                                 2f * halfSize.x, 2f * halfSize.y);
     }
 
 }

@@ -7,4 +7,7 @@ public enum CharacterState {
     , jump_up
     , jump_down
     , ledge_grab
+    , whipping
+    , stunned
+    , dead
 }

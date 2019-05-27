@@ -106,7 +106,11 @@ public class Assets implements Disposable {
         characterAnimations.put(CharacterState.run,        new Animation<>(0.01f, atlas.findRegions("character/char-run-right")  , Animation.PlayMode.LOOP));
         characterAnimations.put(CharacterState.jump_up,    new Animation<>(0.01f, atlas.findRegions("character/char-jump-up"),     Animation.PlayMode.LOOP));
         characterAnimations.put(CharacterState.jump_down,  new Animation<>(0.01f, atlas.findRegions("character/char-jump-down"),   Animation.PlayMode.LOOP));
+        // TODO: make animations for these
         characterAnimations.put(CharacterState.ledge_grab, new Animation<>(0.01f, atlas.findRegions("character/char-stand-ready"), Animation.PlayMode.LOOP));
+        characterAnimations.put(CharacterState.whipping,   new Animation<>(0.01f, atlas.findRegions("character/char-stand-ready"), Animation.PlayMode.LOOP));
+        characterAnimations.put(CharacterState.stunned,    new Animation<>(0.01f, atlas.findRegions("character/char-stand-ready"), Animation.PlayMode.LOOP));
+        characterAnimations.put(CharacterState.dead,       new Animation<>(0.01f, atlas.findRegions("character/char-stand-ready"), Animation.PlayMode.LOOP));
 
         ninePatch = new NinePatch(atlas.findRegion("ui/ninepatch-screws"), 6, 6, 6, 6);
 

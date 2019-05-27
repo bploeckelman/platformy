@@ -4,21 +4,24 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.ObjectMap;
-import com.badlogic.gdx.utils.Pool;
+import com.badlogic.gdx.utils.*;
 import lando.systems.platformy.Assets;
 
-public class Map {
+public class Map implements Disposable {
 
     public static final float tile_size = 32f;
     public static int tiles_wide = 30;
     public static int tiles_high = 17;
 
+
     public Vector2 position;
 
     private Assets assets;
     private Array<Tile> tiles;
+    private Array<Tile> tempTiles;
+
+    private static final int num_extra_pool_tiles = 20;
+    private Pool<Tile> tilePool = Pools.get(Tile.class, tiles_wide * tiles_high + num_extra_pool_tiles);
 
     private ObjectMap<Tile.Type, TextureRegion> tileTextures;
 
@@ -27,8 +30,13 @@ public class Map {
         this.position = new Vector2();
         this.tiles = new Array<>(tiles_wide * tiles_high);
         for (int i = 0; i < tiles_wide * tiles_high; ++i) {
-            Tile tile = new Tile(i);
-            this.tiles.add(tile);
+            this.tiles.add(tilePool.obtain()
+                                   .setIndex(i)
+                                   .setType(Tile.Type.empty));
+        }
+        this.tempTiles = new Array<>();
+        for (int i = 0; i < 9; ++i) {
+            this.tempTiles.add(null);
         }
         // Add a floor and a ceiling
         for (int x = 0; x < tiles_wide; ++x) {
@@ -55,21 +63,26 @@ public class Map {
             index = rightCol + row * tiles_wide;
             this.tiles.get(index).type = Tile.Type.block;
         }
-        // Add a platform
-        for (int x = 10; x < 20; ++x) {
-            int row = 2;
-            int index = x + row * tiles_wide;
-            this.tiles.get(index).type = Tile.Type.block;
-        }
-        // And another
-        for (int x = 13; x < 17; ++x) {
-            int row = 4;
-            int index = x + row * tiles_wide;
-            this.tiles.get(index).type = Tile.Type.block;
-        }
+//        // Add a platform
+//        for (int x = 10; x < 20; ++x) {
+//            int row = 2;
+//            int index = x + row * tiles_wide;
+//            this.tiles.get(index).type = Tile.Type.block;
+//        }
+//        // And another
+//        for (int x = 13; x < 17; ++x) {
+//            int row = 4;
+//            int index = x + row * tiles_wide;
+//            this.tiles.get(index).type = Tile.Type.block;
+//        }
         this.tileTextures = new ObjectMap<>();
-        this.tileTextures.put(Tile.Type.empty, assets.atlas.findRegion("tile-empty"));
-        this.tileTextures.put(Tile.Type.block, assets.atlas.findRegion("tile-block"));
+        this.tileTextures.put(Tile.Type.none        , assets.atlas.findRegion("debug"));
+        this.tileTextures.put(Tile.Type.empty       , assets.atlas.findRegion("tile-empty"));
+        this.tileTextures.put(Tile.Type.block       , assets.atlas.findRegion("tile-block-spelunky"));
+        this.tileTextures.put(Tile.Type.ladder      , assets.atlas.findRegion("debug"));
+        this.tileTextures.put(Tile.Type.ladder_deck , assets.atlas.findRegion("debug"));
+        this.tileTextures.put(Tile.Type.exit        , assets.atlas.findRegion("debug"));
+        this.tileTextures.put(Tile.Type.spawn       , assets.atlas.findRegion("debug"));
     }
 
     public void update(float dt) {
@@ -144,4 +157,49 @@ public class Map {
             }
         }
     }
+
+    public static class TileGroup {
+        public static final int center      = 0;
+        public static final int up_left     = 1;
+        public static final int up_center   = 2;
+        public static final int up_right    = 3;
+        public static final int right       = 4;
+        public static final int down_right  = 5;
+        public static final int down_center = 6;
+        public static final int down_left   = 7;
+        public static final int left        = 8;
+    }
+    /**
+     * Get a set of 9 tiles around (and including) the tile with an index specified by the parameters
+     *
+     * These tiles can be indexed in the returned array by using the constants from Map.TileGroup
+     *
+     * @param centerTileX
+     * @param centerTileY
+     * @return
+     */
+    public Array<Tile> getNeighboringTiles(int centerTileX, int centerTileY) {
+        tempTiles.set(TileGroup.center      , getTileAtTilePosition(centerTileX + 0, centerTileY + 0));
+        tempTiles.set(TileGroup.up_left     , getTileAtTilePosition(centerTileX - 1, centerTileY + 1));
+        tempTiles.set(TileGroup.up_center   , getTileAtTilePosition(centerTileX + 0, centerTileY + 1));
+        tempTiles.set(TileGroup.up_right    , getTileAtTilePosition(centerTileX + 1, centerTileY + 1));
+        tempTiles.set(TileGroup.right       , getTileAtTilePosition(centerTileX + 1, centerTileY + 0));
+        tempTiles.set(TileGroup.down_right  , getTileAtTilePosition(centerTileX + 1, centerTileY - 1));
+        tempTiles.set(TileGroup.down_center , getTileAtTilePosition(centerTileX + 0, centerTileY - 1));
+        tempTiles.set(TileGroup.down_left   , getTileAtTilePosition(centerTileX - 1, centerTileY - 1));
+        tempTiles.set(TileGroup.left        , getTileAtTilePosition(centerTileX - 1, centerTileY + 0));
+
+        return tempTiles;
+    }
+
+    public static boolean tileIsType(Tile tile, Tile.Type type) {
+        return (tile != null) && (tile.type == type);
+    }
+
+    @Override
+    public void dispose() {
+        tilePool.freeAll(tiles);
+        tilePool.freeAll(tempTiles);
+    }
+
 }

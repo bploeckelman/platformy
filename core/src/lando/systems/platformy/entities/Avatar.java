@@ -5,9 +5,12 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectMap;
+import com.badlogic.gdx.utils.Pool;
+import com.badlogic.gdx.utils.Pools;
 import lando.systems.platformy.Assets;
 import lando.systems.platformy.entities.test.*;
 
@@ -15,15 +18,17 @@ import java.util.Arrays;
 
 import static lando.systems.platformy.entities.test.CharacterFacing.left;
 import static lando.systems.platformy.entities.test.CharacterFacing.right;
-import static lando.systems.platformy.entities.test.CharacterState.stand;
-import static lando.systems.platformy.entities.test.CharacterState.whipping;
+import static lando.systems.platformy.entities.test.CharacterState.*;
 
 // https://github.com/dbeef/spelunky-ds
 public class Avatar {
 
-    public ObjectMap<Action, Boolean> currentInput;
+    private Pool<Rectangle> rectPool = Pools.get(Rectangle.class);
+
+    public ObjectMap<Action, Boolean> currentInputs;
     private ObjectMap<Action, Boolean> previousInput;
     private ObjectMap<CharacterState, Animation<TextureRegion>> animations;
+    private Animation<TextureRegion> currentAnimation;
 
     private CharacterState currentState;
     private CharacterState previousState;
@@ -34,6 +39,8 @@ public class Avatar {
     private TextureRegion debugTexture;
 
     static class Flags {
+        static boolean grounded              = false;
+
         static boolean crawling              = false;
         static boolean climbing              = false;
         static boolean whipping              = false;
@@ -71,13 +78,18 @@ public class Avatar {
     }
 
     static class Constants {
-        static float damping                   = 0.5f;
-        static float gravity                   = -1000f;
-        static float jumpSpeed                 = 2.55f;
         static float jumpModifierSpringShoes   = 1.65f;
         static int   minHangingTime            = 100; // millis?
         static float horizSpeedDeltaValue      = 500;  // ???
         static float soundReplayTimeClimbing   = 0.5f; // sec?
+
+        static float horizontalSpeed             = 80f;
+        static float horizontalSpeedRunModifier = 1.65f;
+        static float jumpSpeed                  = 350f;
+        static float gravity                    = -20f;
+        static float damping                    = 0.75f;
+        static float rejumpDelayTimeSecs        = 0.2f;
+        static float minJumpSpeed               = 50f;
     }
 
     private float animStateTime;
@@ -85,6 +97,7 @@ public class Avatar {
     private float timeHanging;
     private float timeJumping;
     private float timeClimbing;
+    private float timeGrounded;
 
     private int numRopes;
     private int numBombs;
@@ -97,16 +110,20 @@ public class Avatar {
     public AABB bounds;
     private Map map;
 
+    private Rectangle debugRectHorz = new Rectangle();
+    private Rectangle debugRectVert = new Rectangle();
+
     public Avatar(Assets assets, float x, float y, Map map) {
-        this.currentInput = new ObjectMap<>();
+        this.currentInputs = new ObjectMap<>();
         this.previousInput = new ObjectMap<>();
         Arrays.stream(Action.values()).forEach(action -> {
-            currentInput.put(action, false);
+            currentInputs.put(action, false);
             previousInput.put(action, false);
         });
         this.animations = assets.characterAnimations;
         this.currentState = stand;
         this.previousState = stand;
+        this.currentAnimation = animations.get(currentState);
         this.currentFacing = right;
         this.animStateTime = 0f;
         this.timeSinceLastJump = 0f;
@@ -127,65 +144,223 @@ public class Avatar {
         this.debugTexture = assets.whitePixel;
     }
 
+    private Array<Rectangle> collisionTiles = new Array<>();
     public void update(float dt) {
         previousState = currentState;
         previousFacing = currentFacing;
-        currentInput.entries().forEach(current -> previousInput.put(current.key, current.value));
-        animStateTime += dt;
+        currentInputs.entries().forEach(currentInput -> {
+            previousInput.put(currentInput.key, currentInput.value);
+            currentInput.value = false;
+        });
 
-        handleInput(dt);
+        // -------------------------------------------------------------------------------------------
+        if (Flags.grounded) {
+            timeGrounded += dt;
+        } else {
+            timeGrounded = 0f;
+        }
 
-        velocity.y = Constants.gravity;
+        handleInput2(dt);
 
-        if (Math.abs(velocity.x) < 1f) velocity.x = 0f;
-        if (Math.abs(velocity.y) < 1f) velocity.y = 0f;
+        // apply gravity
+        velocity.add(0f, Constants.gravity);
 
+        // clamp horizontal velocity to zero
+        if (Math.abs(velocity.x) < 1f) {
+            velocity.x = 0f;
+            if (Flags.grounded) {
+                currentState = stand;
+            }
+        }
+
+        // scale velocity by dt
+        velocity.scl(dt);
+
+        // collision detection / response
         Colliding.reset();
-        Array<Tile> neighborTiles = map.getNeighboringTiles(currentXInTiles, currentYInTiles);
-        if (velocity.x > 0f) {
-            if (Map.tileIsType(neighborTiles.get(Map.TileGroup.right), Tile.Type.block)) {
-                Colliding.right = true;
-                velocity.x = 0f;
+        Rectangle playerRect = bounds.toRect(rectPool);
+        {
+            int startX, startY, endX, endY;
+
+            if (velocity.x > 0f) startX = endX = (int) ((bounds.center.x + bounds.halfSize.x + velocity.x) / Map.tile_size);
+            else                 startX = endX = (int) ((bounds.center.x - bounds.halfSize.x + velocity.x) / Map.tile_size);
+            startY = (int) ((bounds.center.y - bounds.halfSize.y) / Map.tile_size);
+            endY   = (int) ((bounds.center.y + bounds.halfSize.y) / Map.tile_size);
+            map.getTiles(startX, startY, endX, endY, collisionTiles, rectPool);
+            playerRect.x += velocity.x;
+            debugRectHorz.setSize(0f, 0f);
+            for (Rectangle tileRect : collisionTiles) {
+                if (playerRect.overlaps(tileRect)) {
+                    if (velocity.x > 0f) Colliding.right = true;
+                    else                 Colliding.left = true;
+                    velocity.x = 0f;
+                    debugRectHorz.set(tileRect);
+                    break;
+                }
             }
-        } else if (velocity.x < 0f) {
-            if (Map.tileIsType(neighborTiles.get(Map.TileGroup.left), Tile.Type.block)) {
-                Colliding.left = true;
-                velocity.x = 0f;
+            playerRect.x = bounds.center.x - bounds.halfSize.x;
+
+            if (velocity.y > 0f) startY = endY = (int) ((bounds.center.y + bounds.halfSize.y + velocity.y) / Map.tile_size);
+            else                 startY = endY = (int) ((bounds.center.y - bounds.halfSize.y + velocity.y) / Map.tile_size);
+            startX = (int) ((bounds.center.x - bounds.halfSize.x) / Map.tile_size);
+            endX   = (int) ((bounds.center.x + bounds.halfSize.x) / Map.tile_size);
+            map.getTiles(startX, startY, endX, endY, collisionTiles, rectPool);
+            playerRect.y += velocity.y;
+            debugRectVert.setSize(0f, 0f);
+            for (Rectangle tileRect : collisionTiles) {
+                if (playerRect.overlaps(tileRect)) {
+                    // actually reset y-position here
+                    // so it is just below / above the tile we collided with
+                    // removes bouncing
+                    if (velocity.y > 0f) {
+                        Colliding.above = true;
+                        bounds.center.y = map.position.y + tileRect.y - bounds.halfSize.y;
+                        debugRectVert.set(tileRect);
+                    } else {
+                        Colliding.below = true;
+                        Flags.grounded = true;
+                        bounds.center.y = map.position.y + tileRect.y + tileRect.height + bounds.halfSize.y;
+                        debugRectVert.set(tileRect);
+                    }
+                    velocity.y = 0f;
+                    break;
+                }
             }
         }
+        rectPool.free(playerRect);
 
-        if (velocity.y > 0f) {
-            if (Map.tileIsType(neighborTiles.get(Map.TileGroup.up_center), Tile.Type.block)) {
-                Colliding.above = true;
-                velocity.y = 0f;
-            }
-        } else if (velocity.y < 0f) {
-            if (Map.tileIsType(neighborTiles.get(Map.TileGroup.up_center), Tile.Type.block)) {
-                Colliding.below = true;
-                velocity.y = 0f;
-            }
-        }
+        // add velocity to position
+        bounds.center.add(velocity);
 
-        bounds.center.add(velocity.x * dt, velocity.y * dt);
+        // unscale velocity by 1/dt
+        velocity.scl(1f / dt);
 
+        // dampen horizontal velocity
         velocity.x *= Constants.damping;
+
+        // ----------------------------------------------------------------------------------------------
+//        handleInput(dt);
+//
+//        velocity.y = Constants.gravity;
+//
+//        if (Math.abs(velocity.x) < 1f) velocity.x = 0f;
+//        if (Math.abs(velocity.y) < 1f) velocity.y = 0f;
+//
+//        Colliding.reset();
+//        Array<Tile> neighborTiles = map.getNeighboringTiles(currentXInTiles, currentYInTiles);
+//        if (velocity.x > 0f) {
+//            if (Map.tileIsType(neighborTiles.get(Map.TileGroup.right), Tile.Type.block)) {
+//                Colliding.right = true;
+//                velocity.x = 0f;
+//            }
+//        } else if (velocity.x < 0f) {
+//            if (Map.tileIsType(neighborTiles.get(Map.TileGroup.left), Tile.Type.block)) {
+//                Colliding.left = true;
+//                velocity.x = 0f;
+//            }
+//        }
+//
+//        if (velocity.y > 0f) {
+//            if (Map.tileIsType(neighborTiles.get(Map.TileGroup.up_center), Tile.Type.block)) {
+//                Colliding.above = true;
+//                velocity.y = 0f;
+//            }
+//        } else if (velocity.y < 0f) {
+//            if (Map.tileIsType(neighborTiles.get(Map.TileGroup.up_center), Tile.Type.block)) {
+//                Colliding.below = true;
+//                velocity.y = 0f;
+//            }
+//        }
+//
+//        bounds.center.add(velocity.x * dt, velocity.y * dt);
+//
+//        velocity.x *= Constants.damping;
+
+        animStateTime += dt;
+        currentAnimation = animations.get(currentState);
     }
 
     public void render(SpriteBatch batch) {
-        Animation<TextureRegion> currentAnimation = animations.get(currentState);
+        batch.setColor(1f, 1f, 0f, 0.5f);
+        batch.draw(debugTexture, debugRectHorz.x, debugRectHorz.y, debugRectHorz.width, debugRectHorz.height);
+        batch.setColor(0f, 1f, 1f, 0.5f);
+        batch.draw(debugTexture, debugRectVert.x, debugRectVert.y, debugRectVert.width, debugRectVert.height);
+        batch.setColor(Color.WHITE);
+
         // TODO: decouple render bounds from collision bounds
-        batch.draw(currentAnimation.getKeyFrame(animStateTime),
-                   bounds.center.x - bounds.halfSize.x, bounds.center.y - bounds.halfSize.y);
+        TextureRegion keyframe = currentAnimation.getKeyFrame(animStateTime);
+        batch.draw(keyframe, bounds.center.x - bounds.halfSize.x, bounds.center.y - bounds.halfSize.y,
+                   keyframe.getRegionWidth() / 2f, keyframe.getRegionHeight() / 2f,
+                   keyframe.getRegionWidth(), keyframe.getRegionHeight(),
+                   (currentFacing == right) ? 1f : -1f, 1f, 0f);
+
+        batch.setColor(1f, 0f, 0f, 0.2f);
+        batch.draw(debugTexture, bounds.center.x - bounds.halfSize.x, bounds.center.y - bounds.halfSize.y, 2f * bounds.halfSize.x, 2f * bounds.halfSize.y);
         batch.setColor(Color.MAGENTA);
         batch.draw(debugTexture, bounds.center.x - 2f, bounds.center.y - 2f, 4f, 4f);
         batch.setColor(Color.WHITE);
+    }
+
+    private void handleInput2(float dt) {
+        // Horizontal movement ------------------------------------------------
+        if (currentInputs.get(Action.left)) {
+            velocity.x = -Constants.horizontalSpeed;
+            currentState = walk;
+            currentFacing = left;
+        }
+        else if (currentInputs.get(Action.right)) {
+            velocity.x = Constants.horizontalSpeed;
+            currentState = walk;
+            currentFacing = right;
+        }
+
+        if (currentInputs.get(Action.run)) {
+            velocity.x = Math.signum(velocity.x) * Constants.horizontalSpeed * Constants.horizontalSpeedRunModifier;
+            currentState = run;
+        }
+
+        // Vertical movement --------------------------------------------------
+        if (currentInputs.get(Action.jump)) {
+            if (Flags.grounded && timeGrounded > Constants.rejumpDelayTimeSecs) {
+                Flags.grounded = false;
+                timeGrounded = 0f;
+                currentState = jump_up;
+                velocity.y += Constants.jumpSpeed;
+            }
+        } else {
+            if (velocity.y > 0f && (currentState == jump_up || currentState == jump_down)) {
+                velocity.y = Math.min(velocity.y, Constants.minJumpSpeed);
+            }
+        }
+
+        // TODO: other input
+        // ----------------- --------------------------------------------------
+        if (currentInputs.get(Action.up)) {
+            Gdx.app.log("Player", "up");
+        }
+
+        if (currentInputs.get(Action.down)) {
+            Gdx.app.log("Player", "down");
+        }
+
+        if (currentInputs.get(Action.attack)) {
+            Gdx.app.log("Player", "attack");
+        }
+
+        if (currentInputs.get(Action.bomb)) {
+            Gdx.app.log("Player", "bomb");
+        }
+
+        if (currentInputs.get(Action.rope)) {
+            Gdx.app.log("Player", "rope");
+        }
     }
 
     private void handleInput(float dt) {
         if (currentState != CharacterState.stunned && currentState != CharacterState.dead) {
 
             // Check for jump input --------------------------------------------------------
-            if (currentInput.get(Action.jump) && timeSinceLastJump > 100f) {
+            if (currentInputs.get(Action.jump) && timeSinceLastJump > 100f) {
 
                 // If we can jump, do so
                 if (Colliding.below || Flags.climbing) {
@@ -222,7 +397,7 @@ public class Avatar {
             }
 
             // Check for jetpack input -----------------------------------------------------
-            if (currentInput.get(Action.jump) && timeSinceLastJump > 100f) {
+            if (currentInputs.get(Action.jump) && timeSinceLastJump > 100f) {
                 Flags.usingJetpack = false;
 
                 if (Carrying.jetpack && jetpackFuel > 0 && !Flags.climbing) {
@@ -238,7 +413,7 @@ public class Avatar {
             }
 
             // Check for whip input --------------------------------------------------------
-            if (currentInput.get(Action.attack)) {
+            if (currentInputs.get(Action.attack)) {
                 if (currentState != CharacterState.stunned && currentState != whipping) {
                     if (Flags.holdingItem) {
                         throwHeldItem();
@@ -254,15 +429,15 @@ public class Avatar {
             }
 
             // Check for rope/bomb input ---------------------------------------------------
-            if (currentInput.get(Action.rope) && numRopes > 0) {
+            if (currentInputs.get(Action.rope) && numRopes > 0) {
                 throwRope();
             }
-            else if (currentInput.get(Action.bomb) && !Flags.holdingItem && numBombs > 0) {
+            else if (currentInputs.get(Action.bomb) && !Flags.holdingItem && numBombs > 0) {
                 takeOutBomb();
             }
 
             // Check for move input --------------------------------------------------------
-            if (currentInput.get(Action.left)) {
+            if (currentInputs.get(Action.left)) {
                 currentFacing = left;
                 Flags.hangingOnTileLeft = false;
 
@@ -272,7 +447,7 @@ public class Avatar {
                     velocity.x = -Constants.horizSpeedDeltaValue;
                 }
             }
-            if (currentInput.get(Action.right)) {
+            if (currentInputs.get(Action.right)) {
                 currentFacing = right;
                 Flags.hangingOnTileRight = false;
 
@@ -290,7 +465,7 @@ public class Avatar {
             currentYInTiles = yy;
 
             // Check for up/down input -----------------------------------------------------
-            if (currentInput.get(Action.up) || currentInput.get(Action.down)) {
+            if (currentInputs.get(Action.up) || currentInputs.get(Action.down)) {
                 if (Flags.climbing) {
                     timeClimbing += dt;
                     if (timeClimbing > Constants.soundReplayTimeClimbing) {
@@ -305,13 +480,13 @@ public class Avatar {
                 // Check neighboring tiles for climb-ability and exit-ability
                 Array<Tile> neighborTiles = map.getNeighboringTiles(currentXInTiles, currentYInTiles);
 
-                Flags.canClimbLadder = currentInput.get(Action.up)
+                Flags.canClimbLadder = currentInputs.get(Action.up)
                                     && (Map.tileIsType(neighborTiles.get(Map.TileGroup.center), Tile.Type.ladder)
                                      || Map.tileIsType(neighborTiles.get(Map.TileGroup.center), Tile.Type.ladder_deck));
 //                                    && (neighborTiles.get(Map.TileGroup.center) != null
 //                                    && (neighborTiles.get(Map.TileGroup.center).type == Tile.Type.ladder ||
 //                                        neighborTiles.get(Map.TileGroup.center).type == Tile.Type.ladder_deck));
-                Flags.canClimbRope &= currentInput.get(Action.up);
+                Flags.canClimbRope &= currentInputs.get(Action.up);
 
                 Flags.exitingLevel = Map.tileIsType(neighborTiles.get(Map.TileGroup.center), Tile.Type.exit);
                 if (Flags.exitingLevel) {
@@ -334,7 +509,7 @@ public class Avatar {
                     timeJumping = 0f;
                     velocity.x = 0f;
 
-                    if (currentInput.get(Action.up)) {
+                    if (currentInputs.get(Action.up)) {
                         velocity.y = Map.tile_size; // probably supposed to be one tile per second? was = -1 (b/c y down)
                     }
 
@@ -356,7 +531,7 @@ public class Avatar {
             }
 
             // Check for down input --------------------------------------------------------
-            if (currentInput.get(Action.down)) {
+            if (currentInputs.get(Action.down)) {
                 Array<Tile> neighborTiles = map.getNeighboringTiles(currentXInTiles, currentYInTiles);
 
                 Flags.canClimbLadder = Map.tileIsType(neighborTiles.get(Map.TileGroup.center), Tile.Type.ladder)
@@ -387,7 +562,7 @@ public class Avatar {
                 }
             } else {
                 Flags.crawling = false;
-                if (!currentInput.get(Action.run)) {
+                if (!currentInputs.get(Action.run)) {
                     // TODO: ???
 //                    maxSpeedHoriz = maxSpeedHorizWalking;
 //                    posUpdateDelta = posUpdateDeltaWalkingRunning;
@@ -396,7 +571,7 @@ public class Avatar {
 
         } else { // stunned or dead...
             Flags.crawling = false;
-            if (!currentInput.get(Action.run)) {
+            if (!currentInputs.get(Action.run)) {
                 // TODO: ???
 //                maxSpeedHoriz = Constants.maxSpeedWalkingHoriz;
 //                posUpdateDelta = posUpdateDeltaWalkingRunning;

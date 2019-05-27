@@ -50,6 +50,7 @@ public class Map implements Disposable {
             index = x + row * tiles_wide;
             this.tiles.get(index).type = Tile.Type.block;
         }
+        this.tiles.get(6 + 1 * tiles_wide).type = Tile.Type.block;
         // Add two walls
         for (int y = 0; y < tiles_high; ++y) {
             int row = y;
@@ -148,14 +149,22 @@ public class Map implements Disposable {
     public void getTiles(int startX, int startY, int endX, int endY, Array<Rectangle> collisionRects, Pool<Rectangle> rectanglePool) {
         rectanglePool.freeAll(collisionRects);
         collisionRects.clear();
-
         for (int y = startY; y <= endY; ++y) {
             for (int x = startX; x <= endX; ++x) {
-                Tile tile = getTileAtWorldPosition(x, y);
+                Tile tile = getTileAtTilePosition(x, y);
                 if (tile == null || tile.isEmpty()) continue;
-                collisionRects.add(rectanglePool.obtain().set(x, y, tile_size, tile_size));
+                collisionRects.add(rectanglePool.obtain()
+                        .set(tile.bounds.x, tile.bounds.y, tile.bounds.width, tile.bounds.height));
             }
         }
+
+//        for (int y = startY; y <= endY; ++y) {
+//            for (int x = startX; x <= endX; ++x) {
+//                Tile tile = getTileAtWorldPosition(x, y);
+//                if (tile == null || tile.isEmpty()) continue;
+//                collisionRects.add(rectanglePool.obtain().set(x, y, tile_size, tile_size));
+//            }
+//        }
     }
 
     public static class TileGroup {

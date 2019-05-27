@@ -32,8 +32,9 @@ public class Tile implements Pool.Poolable {
 
     public Tile setIndex(int index) {
         this.index = index;
-        this.x = index / Map.tiles_wide;
-        this.y = index % Map.tiles_high;
+        this.x = index % Map.tiles_wide;
+        this.y = index / Map.tiles_wide;
+        this.bounds.setPosition(x * Map.tile_size, y * Map.tile_size);
         return this;
     }
 

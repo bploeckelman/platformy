@@ -27,8 +27,8 @@ public class AvatarInput implements ControllerListener, InputProcessor {
 
         Controller controller = Controllers.getControllers().get(0);
         if (controller != null) {
-            player.currentInput.put(Action.left, false);
-            player.currentInput.put(Action.right, false);
+            player.currentInputs.put(Action.left, false);
+            player.currentInputs.put(Action.right, false);
 
             float leftStickHorz = controller.getAxis(Xbox.L_STICK_HORIZONTAL_AXIS);
             float leftStickVert = controller.getAxis(Xbox.L_STICK_VERTICAL_AXIS);
@@ -40,10 +40,10 @@ public class AvatarInput implements ControllerListener, InputProcessor {
 
             float deadZone = 0.15f;
             if (controller.getAxis(Xbox.L_STICK_HORIZONTAL_AXIS) > deadZone) {
-                player.currentInput.put(Action.right, true);
+                player.currentInputs.put(Action.right, true);
             }
             else if (controller.getAxis(Xbox.L_STICK_HORIZONTAL_AXIS) < -deadZone) {
-                player.currentInput.put(Action.left, true);
+                player.currentInputs.put(Action.left, true);
             }
         }
     }
@@ -70,11 +70,23 @@ public class AvatarInput implements ControllerListener, InputProcessor {
 
         boolean inputWasProcessed = false;
         if (buttonCode == Xbox.A) {
-            player.currentInput.put(Action.jump, true);
+            player.currentInputs.put(Action.jump, true);
+            inputWasProcessed = true;
+        }
+        if (buttonCode == Xbox.B) {
+            player.currentInputs.put(Action.bomb, true);
+            inputWasProcessed = true;
+        }
+        if (buttonCode == Xbox.Y) {
+            player.currentInputs.put(Action.rope, true);
+            inputWasProcessed = true;
+        }
+        if (buttonCode == Xbox.X) {
+            player.currentInputs.put(Action.attack, true);
             inputWasProcessed = true;
         }
         if (buttonCode == Xbox.R_TRIGGER) {
-            player.currentInput.put(Action.run, true);
+            player.currentInputs.put(Action.run, true);
             inputWasProcessed = true;
         }
         return inputWasProcessed;
@@ -88,11 +100,23 @@ public class AvatarInput implements ControllerListener, InputProcessor {
 
         boolean inputWasProcessed = false;
         if (buttonCode == Xbox.A) {
-            player.currentInput.put(Action.jump, false);
+            player.currentInputs.put(Action.jump, false);
+            inputWasProcessed = true;
+        }
+        if (buttonCode == Xbox.B) {
+            player.currentInputs.put(Action.bomb, false);
+            inputWasProcessed = true;
+        }
+        if (buttonCode == Xbox.Y) {
+            player.currentInputs.put(Action.rope, false);
+            inputWasProcessed = true;
+        }
+        if (buttonCode == Xbox.X) {
+            player.currentInputs.put(Action.attack, false);
             inputWasProcessed = true;
         }
         if (buttonCode == Xbox.R_TRIGGER) {
-            player.currentInput.put(Action.run, false);
+            player.currentInputs.put(Action.run, false);
             inputWasProcessed = true;
         }
         return inputWasProcessed;
@@ -108,16 +132,16 @@ public class AvatarInput implements ControllerListener, InputProcessor {
     public boolean povMoved(Controller controller, int povCode, PovDirection direction) {
         boolean inputWasProcessed = false;
         if (direction == east || direction == northEast || direction == southEast) {
-            player.currentInput.put(Action.right, true);
+            player.currentInputs.put(Action.right, true);
             inputWasProcessed = true;
         }
         else if (direction == west || direction == northWest || direction == southWest) {
-            player.currentInput.put(Action.left, true);
+            player.currentInputs.put(Action.left, true);
             inputWasProcessed = true;
         } else {
             // TODO: is this going to interfere with keyboard input?
-            player.currentInput.put(Action.left, false);
-            player.currentInput.put(Action.right, false);
+            player.currentInputs.put(Action.left, false);
+            player.currentInputs.put(Action.right, false);
         }
         return inputWasProcessed;
     }
@@ -145,19 +169,19 @@ public class AvatarInput implements ControllerListener, InputProcessor {
     public boolean keyDown(int keycode) {
         boolean inputWasProcessed = false;
         if (keycode == Input.Keys.A || keycode == Input.Keys.LEFT) {
-            player.currentInput.put(Action.left, true);
+            player.currentInputs.put(Action.left, true);
             inputWasProcessed = true;
         }
         if (keycode == Input.Keys.D || keycode == Input.Keys.RIGHT) {
-            player.currentInput.put(Action.right, true);
+            player.currentInputs.put(Action.right, true);
             inputWasProcessed = true;
         }
         if (keycode == Input.Keys.SPACE) {
-            player.currentInput.put(Action.jump, true);
+            player.currentInputs.put(Action.jump, true);
             inputWasProcessed = true;
         }
         if (keycode == Input.Keys.SHIFT_LEFT) {
-            player.currentInput.put(Action.run, true);
+            player.currentInputs.put(Action.run, true);
             inputWasProcessed = true;
         }
         return inputWasProcessed;
@@ -167,19 +191,19 @@ public class AvatarInput implements ControllerListener, InputProcessor {
     public boolean keyUp(int keycode) {
         boolean inputWasProcessed = false;
         if (keycode == Input.Keys.A || keycode == Input.Keys.LEFT) {
-            player.currentInput.put(Action.left, false);
+            player.currentInputs.put(Action.left, false);
             inputWasProcessed = true;
         }
         if (keycode == Input.Keys.D || keycode == Input.Keys.RIGHT) {
-            player.currentInput.put(Action.right, false);
+            player.currentInputs.put(Action.right, false);
             inputWasProcessed = true;
         }
         if (keycode == Input.Keys.SPACE) {
-            player.currentInput.put(Action.jump, false);
+            player.currentInputs.put(Action.jump, false);
             inputWasProcessed = true;
         }
         if (keycode == Input.Keys.SHIFT_LEFT) {
-            player.currentInput.put(Action.run, false);
+            player.currentInputs.put(Action.run, false);
             inputWasProcessed = true;
         }
         return inputWasProcessed;

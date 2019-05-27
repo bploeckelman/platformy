@@ -78,7 +78,7 @@ public class Game extends ApplicationAdapter {
 		Gdx.gl.glClearColor(Config.clearColor.r, Config.clearColor.g, Config.clearColor.b, Config.clearColor.a);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-		float dt = Math.min(Gdx.graphics.getDeltaTime(), 1f / 30f) * 0.2f;
+		float dt = Math.max(Gdx.graphics.getDeltaTime(), 1f / 30f);
 		tween.update(dt);
 		screen.update(dt);
 		if (nextScreen != null) {

@@ -10,10 +10,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import lando.systems.platformy.Assets;
 import lando.systems.platformy.Game;
 import lando.systems.platformy.entities.Avatar;
-import lando.systems.platformy.entities.test.AABB;
-import lando.systems.platformy.entities.test.AvatarInput;
-import lando.systems.platformy.entities.test.CharacterState;
-import lando.systems.platformy.entities.test.Map;
+import lando.systems.platformy.entities.test.*;
 
 public class SepAxisScreen extends BaseScreen {
 
@@ -53,8 +50,8 @@ public class SepAxisScreen extends BaseScreen {
 
         this.player = new Avatar(assets, playerX, playerY, map);
 
-        worldCamera.translate(0f, -10f);
-        worldCamera.update();
+//        worldCamera.translate(0f, -10f);
+//        worldCamera.update();
 
         this.input = new AvatarInput(player);
         Controllers.addListener(input);
@@ -72,10 +69,10 @@ public class SepAxisScreen extends BaseScreen {
         input.update(dt);
         player.update(dt);
 
-        playerBounds.center.y += Environment.gravity * dt;
-        if (playerBounds.center.y - playerBounds.halfSize.y < Map.tile_size) {
-            playerBounds.center.y = playerBounds.halfSize.y + Map.tile_size;
-        }
+//        playerBounds.center.y += Environment.gravity * dt;
+//        if (playerBounds.center.y - playerBounds.halfSize.y < Map.tile_size) {
+//            playerBounds.center.y = playerBounds.halfSize.y + Map.tile_size;
+//        }
 
         cameraTargetPos.set(playerBounds.center, 0f);
         updateCamera();
@@ -88,10 +85,10 @@ public class SepAxisScreen extends BaseScreen {
         {
             map.render(batch);
 
-            batch.draw(assets.whiteCircleOutline, //playerIdleAnim.getKeyFrame(animStateTime),
-                       playerBounds.center.x - playerBounds.halfSize.x,
-                       playerBounds.center.y - playerBounds.halfSize.y,
-                       2f * playerBounds.halfSize.x, 2f * playerBounds.halfSize.y);
+//            batch.draw(assets.whiteCircleOutline, //playerIdleAnim.getKeyFrame(animStateTime),
+//                       playerBounds.center.x - playerBounds.halfSize.x,
+//                       playerBounds.center.y - playerBounds.halfSize.y,
+//                       2f * playerBounds.halfSize.x, 2f * playerBounds.halfSize.y);
 
             player.render(batch);
 
@@ -118,6 +115,27 @@ public class SepAxisScreen extends BaseScreen {
             y -= assets.layout.height + margin;
 
             assets.layout.setText(assets.font, String.format("Vel: (%2.2f, %2.2f)", player.velocity.x, player.velocity.y));
+            assets.font.draw(batch, assets.layout, margin, y);
+            y -= assets.layout.height + margin + margin;
+
+
+            assets.layout.setText(assets.font, String.format("Run: %b", player.currentInputs.get(Action.run)));
+            assets.font.draw(batch, assets.layout, margin, y);
+            y -= assets.layout.height + margin;
+
+            assets.layout.setText(assets.font, String.format("Jmp: %b", player.currentInputs.get(Action.jump)));
+            assets.font.draw(batch, assets.layout, margin, y);
+            y -= assets.layout.height + margin;
+
+            assets.layout.setText(assets.font, String.format("Atk: %b", player.currentInputs.get(Action.attack)));
+            assets.font.draw(batch, assets.layout, margin, y);
+            y -= assets.layout.height + margin;
+
+            assets.layout.setText(assets.font, String.format("Rop: %b", player.currentInputs.get(Action.rope)));
+            assets.font.draw(batch, assets.layout, margin, y);
+            y -= assets.layout.height + margin;
+
+            assets.layout.setText(assets.font, String.format("Bom: %b", player.currentInputs.get(Action.bomb)));
             assets.font.draw(batch, assets.layout, margin, y);
             y -= assets.layout.height + margin;
         }

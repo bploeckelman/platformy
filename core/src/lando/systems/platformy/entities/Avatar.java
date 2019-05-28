@@ -87,7 +87,7 @@ public class Avatar {
         static float horizontalSpeedRunModifier = 1.65f;
         static float jumpSpeed                  = 350f;
         static float gravity                    = -20f;
-        static float damping                    = 0.75f;
+        static float damping                    = 0.5f;
         static float rejumpDelayTimeSecs        = 0.2f;
         static float minJumpSpeed               = 50f;
     }
@@ -281,9 +281,9 @@ public class Avatar {
     }
 
     public void render(SpriteBatch batch) {
-        batch.setColor(1f, 1f, 0f, 0.5f);
+        batch.setColor(1f, 1f, 0f, 0.2f);
         batch.draw(debugTexture, debugRectHorz.x, debugRectHorz.y, debugRectHorz.width, debugRectHorz.height);
-        batch.setColor(0f, 1f, 1f, 0.5f);
+        batch.setColor(0f, 1f, 1f, 0.2f);
         batch.draw(debugTexture, debugRectVert.x, debugRectVert.y, debugRectVert.width, debugRectVert.height);
         batch.setColor(Color.WHITE);
 
@@ -314,7 +314,7 @@ public class Avatar {
             currentFacing = right;
         }
 
-        if (currentInputs.get(Action.run)) {
+        if (currentInputs.get(Action.run) && currentState == walk) {
             velocity.x = Math.signum(velocity.x) * Constants.horizontalSpeed * Constants.horizontalSpeedRunModifier;
             currentState = run;
         }

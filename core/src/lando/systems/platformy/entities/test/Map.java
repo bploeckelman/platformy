@@ -64,18 +64,25 @@ public class Map implements Disposable {
             index = rightCol + row * tiles_wide;
             this.tiles.get(index).type = Tile.Type.block;
         }
-//        // Add a platform
-//        for (int x = 10; x < 20; ++x) {
-//            int row = 2;
-//            int index = x + row * tiles_wide;
-//            this.tiles.get(index).type = Tile.Type.block;
-//        }
-//        // And another
-//        for (int x = 13; x < 17; ++x) {
-//            int row = 4;
-//            int index = x + row * tiles_wide;
-//            this.tiles.get(index).type = Tile.Type.block;
-//        }
+        // Add a platform
+        for (int x = 10; x < 20; ++x) {
+            int row = 2;
+            int index = x + row * tiles_wide;
+            this.tiles.get(index).type = Tile.Type.block;
+        }
+        // And another
+        for (int x = 13; x < 17; ++x) {
+            int row = 4;
+            int index = x + row * tiles_wide;
+            this.tiles.get(index).type = Tile.Type.block;
+        }
+        // And another other
+        for (int x = 6; x < 20; ++x) {
+            if (x == 13 || x == 14 || x == 15) continue;
+            int row = 7;
+            int index = x + row * tiles_wide;
+            this.tiles.get(index).type = Tile.Type.block;
+        }
         this.tileTextures = new ObjectMap<>();
         this.tileTextures.put(Tile.Type.none        , assets.atlas.findRegion("debug"));
         this.tileTextures.put(Tile.Type.empty       , assets.atlas.findRegion("tile-empty"));
@@ -140,9 +147,6 @@ public class Map implements Disposable {
     public Tile getTileAtTilePosition(int x, int y) {
         if (isOffMap(x, y)) return null;
         int index = x + y * tiles_wide;
-//        if (index < 0 || index >= tiles.size) {
-//            return null;
-//        }
         return tiles.get(index);
     }
 
@@ -157,14 +161,6 @@ public class Map implements Disposable {
                         .set(tile.bounds.x, tile.bounds.y, tile.bounds.width, tile.bounds.height));
             }
         }
-
-//        for (int y = startY; y <= endY; ++y) {
-//            for (int x = startX; x <= endX; ++x) {
-//                Tile tile = getTileAtWorldPosition(x, y);
-//                if (tile == null || tile.isEmpty()) continue;
-//                collisionRects.add(rectanglePool.obtain().set(x, y, tile_size, tile_size));
-//            }
-//        }
     }
 
     public static class TileGroup {

@@ -11,6 +11,7 @@ import com.badlogic.gdx.controllers.mappings.Xbox;
 import com.badlogic.gdx.math.Vector3;
 import lando.systems.platformy.Config;
 import lando.systems.platformy.entities.Avatar;
+import lando.systems.platformy.entities.Player;
 
 import static com.badlogic.gdx.controllers.PovDirection.*;
 
@@ -101,6 +102,7 @@ public class AvatarInput implements ControllerListener, InputProcessor {
         boolean inputWasProcessed = false;
         if (buttonCode == Xbox.A) {
             player.currentInputs.put(Action.jump, false);
+            Avatar.Flags.jumpButtonReleasedSinceGrounded = true;
             inputWasProcessed = true;
         }
         if (buttonCode == Xbox.B) {
@@ -200,6 +202,7 @@ public class AvatarInput implements ControllerListener, InputProcessor {
         }
         if (keycode == Input.Keys.SPACE) {
             player.currentInputs.put(Action.jump, false);
+            Avatar.Flags.jumpButtonReleasedSinceGrounded = true;
             inputWasProcessed = true;
         }
         if (keycode == Input.Keys.SHIFT_LEFT) {

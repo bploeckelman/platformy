@@ -38,8 +38,9 @@ public class Avatar {
 
     private TextureRegion debugTexture;
 
-    static class Flags {
+    public static class Flags {
         static boolean grounded              = false;
+        public static boolean jumpButtonReleasedSinceGrounded = true;
 
         static boolean crawling              = false;
         static boolean climbing              = false;
@@ -326,8 +327,9 @@ public class Avatar {
 
         // Vertical movement --------------------------------------------------
         if (currentInputs.get(Action.jump)) {
-            if (Flags.grounded && timeGrounded > Constants.rejumpDelayTimeSecs) {
+            if (Flags.grounded && Flags.jumpButtonReleasedSinceGrounded) {//timeGrounded > Constants.rejumpDelayTimeSecs) {
                 Flags.grounded = false;
+                Flags.jumpButtonReleasedSinceGrounded = false;
                 timeGrounded = 0f;
                 currentState = jump_up;
                 velocity.y = Constants.jumpSpeed;

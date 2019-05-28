@@ -50,9 +50,6 @@ public class SepAxisScreen extends BaseScreen {
 
         this.player = new Avatar(assets, playerX, playerY, map);
 
-//        worldCamera.translate(0f, -10f);
-//        worldCamera.update();
-
         this.input = new AvatarInput(player);
         Controllers.addListener(input);
         Gdx.input.setInputProcessor(input);

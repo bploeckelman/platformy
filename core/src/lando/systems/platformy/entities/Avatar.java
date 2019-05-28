@@ -276,6 +276,11 @@ public class Avatar {
 //
 //        velocity.x *= Constants.damping;
 
+        if (!Flags.grounded) {
+            if      (velocity.y > 0f) currentState = jump_up;
+            else if (velocity.y < 0f) currentState = jump_down;
+        }
+
         animStateTime += dt;
         currentAnimation = animations.get(currentState);
     }
@@ -325,7 +330,8 @@ public class Avatar {
                 Flags.grounded = false;
                 timeGrounded = 0f;
                 currentState = jump_up;
-                velocity.y += Constants.jumpSpeed;
+                velocity.y = Constants.jumpSpeed;
+//                velocity.y += Constants.jumpSpeed;
             }
         } else {
             if (velocity.y > 0f && (currentState == jump_up || currentState == jump_down)) {

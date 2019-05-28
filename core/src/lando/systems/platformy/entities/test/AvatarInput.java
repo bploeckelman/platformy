@@ -38,7 +38,7 @@ public class AvatarInput implements ControllerListener, InputProcessor {
                                   + "  vert = " + String.format("%2.2f", leftStickVert));
             }
 
-            float deadZone = 0.15f;
+            float deadZone = 0.25f;
             if (controller.getAxis(Xbox.L_STICK_HORIZONTAL_AXIS) > deadZone) {
                 player.currentInputs.put(Action.right, true);
             }

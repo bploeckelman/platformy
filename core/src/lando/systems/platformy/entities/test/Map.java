@@ -13,7 +13,6 @@ public class Map implements Disposable {
     public static int tiles_wide = 30;
     public static int tiles_high = 17;
 
-
     public Vector2 position;
 
     private Assets assets;
@@ -102,14 +101,14 @@ public class Map implements Disposable {
         float y = position.y;
         int rowCounter = 0;
         for (Tile tile : tiles) {
-            batch.draw(tileTextures.get(tile.type), x, y, tile_size, tile_size);
+            batch.draw(tileTextures.get(tile.type), x, y, 1f, 1f);
 
-            x += tile_size;
+            x += 1f;
             rowCounter++;
             if (rowCounter >= tiles_wide) {
                 rowCounter = 0;
                 x = position.x;
-                y += tile_size;
+                y += 1f;
             }
         }
     }

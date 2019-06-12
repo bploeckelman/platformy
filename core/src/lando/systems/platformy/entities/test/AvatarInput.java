@@ -95,9 +95,9 @@ public class AvatarInput implements ControllerListener, InputProcessor {
 
     @Override
     public boolean buttonUp(Controller controller, int buttonCode) {
-//        if (Config.debug) {
+        if (Config.debug) {
         Gdx.app.log("CONTROLLER", "button up: " + buttonCode);
-//        }
+        }
 
         boolean inputWasProcessed = false;
         if (buttonCode == Xbox.A) {

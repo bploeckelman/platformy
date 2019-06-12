@@ -2,29 +2,22 @@ package lando.systems.platformy.screens;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.controllers.Controllers;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import lando.systems.platformy.Assets;
 import lando.systems.platformy.Game;
 import lando.systems.platformy.entities.Avatar;
-import lando.systems.platformy.entities.test.*;
+import lando.systems.platformy.entities.test.Action;
+import lando.systems.platformy.entities.test.AvatarInput;
+import lando.systems.platformy.entities.test.Map;
 
 public class SepAxisScreen extends BaseScreen {
 
     private Assets assets;
     private Map map;
-
-    private AABB playerBounds;
-
-    static class Environment {
-        public static float gravity = -1000f;
-    }
-
-    private float animStateTime;
-    private Animation<TextureRegion> playerIdleAnim;
 
     private Avatar player;
     private AvatarInput input;
@@ -32,27 +25,28 @@ public class SepAxisScreen extends BaseScreen {
     private TextureRegion arrowUp;
     private TextureRegion arrowRight;
 
+    static class OnScreenTiles {
+        static final int numWide = 30;
+        static final int numHigh = 18;
+    }
+
     public SepAxisScreen(Game game) {
         super(game);
         this.assets = game.assets;
         this.map = new Map(assets);
-        this.animStateTime = 0f;
-        this.playerIdleAnim = assets.characterAnimations.get(CharacterState.stand);
 
-        float playerX = 6f * Map.tile_size;
-        float playerY = 4f * Map.tile_size;
-        this.playerBounds = new AABB(playerX, playerY,
-                                     playerIdleAnim.getKeyFrame(0f).getRegionWidth() / 2f,
-                                     playerIdleAnim.getKeyFrame(0f).getRegionHeight() / 2f);
+        this.worldCamera.setToOrtho(false, OnScreenTiles.numWide, OnScreenTiles.numHigh);
+        this.worldCamera.update();
+        this.cameraTargetPos.set(this.worldCamera.position);
 
         this.arrowUp = assets.atlas.findRegion("arrow-up");
         this.arrowRight = assets.atlas.findRegion("arrow-right");
 
-        this.player = new Avatar(assets, playerX, playerY, map);
+        this.player = new Avatar(assets, 5, 5, map);
 
         this.input = new AvatarInput(player);
         Controllers.addListener(input);
-        Gdx.input.setInputProcessor(input);
+        Gdx.input.setInputProcessor(new InputMultiplexer(input, this));
     }
 
     @Override
@@ -61,17 +55,11 @@ public class SepAxisScreen extends BaseScreen {
             Gdx.app.exit();
         }
 
-        animStateTime += dt;
-
         input.update(dt);
         player.update(dt);
+        map.update(dt);
 
-//        playerBounds.center.y += Environment.gravity * dt;
-//        if (playerBounds.center.y - playerBounds.halfSize.y < Map.tile_size) {
-//            playerBounds.center.y = playerBounds.halfSize.y + Map.tile_size;
-//        }
-
-        cameraTargetPos.set(playerBounds.center, 0f);
+        cameraTargetPos.set(player.bounds.center, 0f);
         updateCamera();
     }
 
@@ -81,18 +69,10 @@ public class SepAxisScreen extends BaseScreen {
         batch.begin();
         {
             map.render(batch);
-
-//            batch.draw(assets.whiteCircleOutline, //playerIdleAnim.getKeyFrame(animStateTime),
-//                       playerBounds.center.x - playerBounds.halfSize.x,
-//                       playerBounds.center.y - playerBounds.halfSize.y,
-//                       2f * playerBounds.halfSize.x, 2f * playerBounds.halfSize.y);
-
             player.render(batch);
 
-            batch.setColor(Color.RED);
-            batch.draw(arrowRight, 8f, 0f, 16f, 8f);
-            batch.setColor(Color.GREEN);
-            batch.draw(arrowUp, 0f, 8f, 8f, 16f);
+            batch.setColor(Color.RED);   batch.draw(arrowRight, 0f, -1f / 2f, 1f, 1f / 2f);
+            batch.setColor(Color.GREEN); batch.draw(arrowUp,    -1f / 2f, 0f, 1f / 2f, 1f);
 
             batch.setColor(Color.WHITE);
         }
@@ -137,6 +117,12 @@ public class SepAxisScreen extends BaseScreen {
             y -= assets.layout.height + margin;
         }
         batch.end();
+    }
+
+    @Override
+    public boolean scrolled(int amount) {
+        targetZoom.setValue(targetZoom.floatValue() + 0.1f * amount);
+        return true;
     }
 
 }

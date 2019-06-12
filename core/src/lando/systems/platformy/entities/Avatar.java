@@ -84,13 +84,17 @@ public class Avatar {
         static float horizSpeedDeltaValue      = 500;  // ???
         static float soundReplayTimeClimbing   = 0.5f; // sec?
 
-        static float horizontalSpeed             = 80f;
+//        static float horizontalSpeed             = 80f;
+        static float horizontalSpeed             = 3f;
         static float horizontalSpeedRunModifier = 1.65f;
-        static float jumpSpeed                  = 350f;
-        static float gravity                    = -20f;
+//        static float jumpSpeed                  = 350f;
+        static float jumpSpeed                  = 10f;
+//        static float gravity                    = -20f;
+        static float gravity                    = -0.5f;
         static float damping                    = 0.5f;
         static float rejumpDelayTimeSecs        = 0.2f;
-        static float minJumpSpeed               = 50f;
+//        static float minJumpSpeed               = 50f;
+        static float minJumpSpeed               = 2.5f;
     }
 
     private float animStateTime;
@@ -135,11 +139,9 @@ public class Avatar {
         this.numBombs = 0;
         this.jetpackFuel = 0;
         this.velocity = new Vector2();
-        this.bounds = new AABB(x, y,
-                               animations.get(stand).getKeyFrame(0f).getRegionWidth() / 2f,
-                               animations.get(stand).getKeyFrame(0f).getRegionHeight() / 2f);
-        this.currentXInTiles = Math.floorDiv((int) bounds.center.x, (int) Map.tile_size);
-        this.currentYInTiles = Math.floorDiv((int) bounds.center.y, (int) Map.tile_size);
+        this.bounds = new AABB(x, y, 1f / 2f, 1f / 2f);
+        this.currentXInTiles = (int) Math.floor(bounds.center.x);
+        this.currentYInTiles = (int) Math.floor(bounds.center.y);
         this.map = map;
 
         this.debugTexture = assets.whitePixel;
@@ -183,10 +185,10 @@ public class Avatar {
         {
             int startX, startY, endX, endY;
 
-            if (velocity.x > 0f) startX = endX = (int) ((bounds.center.x + bounds.halfSize.x + velocity.x) / Map.tile_size);
-            else                 startX = endX = (int) ((bounds.center.x - bounds.halfSize.x + velocity.x) / Map.tile_size);
-            startY = (int) ((bounds.center.y - bounds.halfSize.y) / Map.tile_size);
-            endY   = (int) ((bounds.center.y + bounds.halfSize.y) / Map.tile_size);
+            if (velocity.x > 0f) startX = endX = (int) (bounds.center.x + bounds.halfSize.x + velocity.x);
+            else                 startX = endX = (int) (bounds.center.x - bounds.halfSize.x + velocity.x);
+            startY = (int) (bounds.center.y - bounds.halfSize.y);
+            endY   = (int) (bounds.center.y + bounds.halfSize.y);
             map.getTiles(startX, startY, endX, endY, collisionTiles, rectPool);
             playerRect.x += velocity.x;
             debugRectHorz.setSize(0f, 0f);
@@ -201,10 +203,10 @@ public class Avatar {
             }
             playerRect.x = bounds.center.x - bounds.halfSize.x;
 
-            if (velocity.y > 0f) startY = endY = (int) ((bounds.center.y + bounds.halfSize.y + velocity.y) / Map.tile_size);
-            else                 startY = endY = (int) ((bounds.center.y - bounds.halfSize.y + velocity.y) / Map.tile_size);
-            startX = (int) ((bounds.center.x - bounds.halfSize.x) / Map.tile_size);
-            endX   = (int) ((bounds.center.x + bounds.halfSize.x) / Map.tile_size);
+            if (velocity.y > 0f) startY = endY = (int) (bounds.center.y + bounds.halfSize.y + velocity.y);
+            else                 startY = endY = (int) (bounds.center.y - bounds.halfSize.y + velocity.y);
+            startX = (int) (bounds.center.x - bounds.halfSize.x);
+            endX   = (int) (bounds.center.x + bounds.halfSize.x);
             map.getTiles(startX, startY, endX, endY, collisionTiles, rectPool);
             playerRect.y += velocity.y;
             debugRectVert.setSize(0f, 0f);
@@ -295,15 +297,13 @@ public class Avatar {
 
         // TODO: decouple render bounds from collision bounds
         TextureRegion keyframe = currentAnimation.getKeyFrame(animStateTime);
-        batch.draw(keyframe, bounds.center.x - bounds.halfSize.x, bounds.center.y - bounds.halfSize.y,
-                   keyframe.getRegionWidth() / 2f, keyframe.getRegionHeight() / 2f,
-                   keyframe.getRegionWidth(), keyframe.getRegionHeight(),
+        batch.draw(keyframe, bounds.center.x - bounds.halfSize.x, bounds.center.y - bounds.halfSize.y, 0.5f, 0.5f, 1f, 1f,
                    (currentFacing == right) ? 1f : -1f, 1f, 0f);
 
-        batch.setColor(1f, 0f, 0f, 0.2f);
-        batch.draw(debugTexture, bounds.center.x - bounds.halfSize.x, bounds.center.y - bounds.halfSize.y, 2f * bounds.halfSize.x, 2f * bounds.halfSize.y);
-        batch.setColor(Color.MAGENTA);
-        batch.draw(debugTexture, bounds.center.x - 2f, bounds.center.y - 2f, 4f, 4f);
+        batch.setColor(1f, 0f, 0f, 0.1f);
+        batch.draw(debugTexture,
+                   bounds.center.x - bounds.halfSize.x, bounds.center.y - bounds.halfSize.y,
+                   2f * bounds.halfSize.x, 2f * bounds.halfSize.y);
         batch.setColor(Color.WHITE);
     }
 

@@ -1,14 +1,12 @@
 package lando.systems.platformy.screens;
 
 import aurelienribon.tweenengine.primitives.MutableFloat;
-import com.badlogic.gdx.Audio;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputAdapter;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
-import lando.systems.platformy.Assets;
 import lando.systems.platformy.Config;
 import lando.systems.platformy.Game;
 
@@ -20,11 +18,11 @@ public abstract class BaseScreen extends InputAdapter {
     public OrthographicCamera hudCamera;
 
     protected static final float MAX_ZOOM = 2f;
-    protected static final float MIN_ZOOM = 1.0f;
+    protected static final float MIN_ZOOM = 0.1f;
     private static final float ZOOM_LERP = .02f;
     private static final float PAN_LERP = .1f;
     public Vector3 cameraTargetPos = new Vector3();
-    public MutableFloat targetZoom = new MutableFloat(1f);
+    public MutableFloat targetZoom = new MutableFloat(0.5f);
     public boolean cameraOverride = false;
 
     public boolean allowInput;

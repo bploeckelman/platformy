@@ -26,7 +26,7 @@ public class Tile implements Pool.Poolable {
 
     public Tile(int index, Type type) {
         this.type = type;
-        this.bounds = new Rectangle(x * Map.tile_size, y * Map.tile_size, Map.tile_size, Map.tile_size);
+        this.bounds = new Rectangle(x, y, 1, 1);
         setIndex(index);
     }
 
@@ -34,7 +34,7 @@ public class Tile implements Pool.Poolable {
         this.index = index;
         this.x = index % Map.tiles_wide;
         this.y = index / Map.tiles_wide;
-        this.bounds.setPosition(x * Map.tile_size, y * Map.tile_size);
+        this.bounds.setPosition(x, y);
         return this;
     }
 
@@ -49,7 +49,7 @@ public class Tile implements Pool.Poolable {
         type = Type.none;
         x = -1;
         y = -1;
-        bounds.set(x, y, Map.tile_size, Map.tile_size);
+        bounds.set(x, y, 1f, 1f);
     }
 
     public boolean isEmpty() {
